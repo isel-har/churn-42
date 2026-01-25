@@ -70,7 +70,20 @@ def main():
         sum_x2  += chunk[kept_num_cols].pow(2).sum(axis=0)
 
     # print("==============================sum of all kept numerical features==============================")
+    categories_for_ohe = [
+        sorted(list(unique_categories[cat]))
+        for cat in kept_cat_cols
+    ]
+    encoder = OneHotEncoder(
+        categories=categories_for_ohe,
+        handle_unknown="ignore",
+        sparse_output=False
+    )
 
+
+    df = pd.read_csv('data/bank_data_train.csv', usecols=kept_cat_cols, nrows=100)
+    encoder.fit(df)
+    del df
 
     mean     = sum_x / samples
     variance = (sum_x2 / samples) - (mean ** 2)
@@ -78,21 +91,12 @@ def main():
 
     # kept_num_cols = variance[variance > 1e-4].index.to_list()
 
-    encoders = []
-
-    # ---- encoders ----
-    # onehot_encoder = None
-    for cat in kept_cat_cols:
-        encoder = OneHotEncoder(categories=unique_categories[cat])
-        encoders.append(encoder)
-
-
 
 
     preprocessor = {
         "mean":mean.to_numpy(),
         "std" : std_dev,
-        "encoders":encoders,
+        "encoder":encoder,
         "kept_num_cols":kept_num_cols,
         "kept_cat_cols":kept_cat_cols,
         'dtypes':dtypes_dict
