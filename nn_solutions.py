@@ -25,12 +25,8 @@ kept_num_cols = preprocessor['kept_num_cols']
 kept_cat_cols = preprocessor['kept_cat_cols']
 encoder       = preprocessor['encoder']
 
-dtype = preprocessor['dtypes']
-
-
-
-
-
+dtype   = preprocessor['dtypes']
+x_shape = preprocessor['x_shape']
 
 
 
@@ -38,7 +34,7 @@ sklearn_sol = MLPClassifier(hidden_layer_sizes=(64, 32), activation='relu', solv
 classes     = np.array([0, 1])
 
 keras_sol   = Sequential([
-        Dense(64, activation='relu', input_shape=(56,)),
+        Dense(64, activation='relu', input_shape=(x_shape,)),
         Dense(32, activation='relu'),
         Dense(1, activation='sigmoid')
 ])
@@ -46,7 +42,7 @@ keras_sol   = Sequential([
 keras_sol.compile(
     optimizer='adam',
     loss=BinaryCrossentropy(from_logits=False),
-    metrics=['accuracy']
+    metrics=['accuracy'],
 )
 
 
@@ -79,16 +75,26 @@ for i, chunk in enumerate(chunks, start=1):
 
 test_df = pd.read_csv("data/bank_data_test.csv")
 
-
 test_df[kept_num_cols] = test_df[kept_num_cols].fillna(0.0)
 test_df[kept_cat_cols] = test_df[kept_cat_cols].fillna(CAT_NA_VALUE)
 
 X_cat_enc = encoder.transform(test_df[kept_cat_cols])
 
 X_cat_enc = pd.DataFrame(X_cat_enc, columns=encoder.get_feature_names_out(kept_cat_cols), index=test_df.index)
-X_num = (test_df[kept_num_cols] - mean) / std_dev
+X_num     = (test_df[kept_num_cols] - mean) / std_dev
 
-X    = pd.concat([X_num, X_cat_enc], axis=1)
-y_pred = keras_sol.predict(X)
+X         = pd.concat([X_num, X_cat_enc], axis=1)
+
+# y_pred = keras_sol.predict(X)
 ## use numpy argmax
-print(y_pred)
+
+targets = keras_sol.predict(X).reshape(-1)
+data = {
+    "ID": [n for n in range(0, len(targets))],
+    "TARGET":targets
+}
+
+df = pd.DataFrame(data=data)
+
+df.to_csv("predictions.csv", index=False)
+print("CSV file saved.")
