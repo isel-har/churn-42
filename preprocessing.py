@@ -2,11 +2,11 @@
 from sklearn.preprocessing import OrdinalEncoder#OneHotEncoder
 import pandas as pd
 import numpy as np
-import lightgbm as lgb
+# import lightgbm as lgb
 
-
-from sklearn.feature_selection import chi2
-from sklearn.feature_selection import mutual_info_classif
+from scipy.stats import chi2_contingency
+# from sklearn.feature_selection import mutual_info_regression
+from sklearn.metrics import roc_auc_score
 # from sklearn.experimental import enable_iterative_imputer
 # from sklearn.impute import SimpleImputer
 # from sklearn.impute import IterativeImputer
@@ -20,6 +20,8 @@ pd.set_option('display.max_rows', None)
 CAT_NA_VALUE     = "__MISSING__"
 MISSING_TRESHOLD = 70
 
+def cramers_v(chi2, n, k):
+    return np.sqrt(chi2 / (n * (k - 1)))
 
 # def impute_with_lgb(df, target_col, numeric=True):
 #     # Split data
@@ -77,198 +79,161 @@ def main():
             cat_cols = chunk.select_dtypes(exclude='number').columns.to_list()
 
 
-
         samples    += len(chunk)
         class_sum  += len(chunk[chunk['TARGET'] == 1])
         nan_counts += chunk.isna().sum()
 
     print(f"dataset shape : {samples, columns}")
-    print("columns type :\n", dtypes)
+    # print("columns type :\n", dtypes)
     print(f"class value 1 : {class_sum}")
     print(f"class value 0 : {samples - class_sum}")
 
+
     nan_counts = (nan_counts / samples) * 100
-    print("Missing values percentage for each column:\n", nan_counts)
-    # [✓] Feature distributions
-    # [✓] Correlations
-
-    # preprocessing
-        # [✓] Handle missing values
-        # [✓] Handle anomalies/outliers
-        # [✓] Feature engineering/generation
-        # [✓] Feature selection
-        # [✓] Encode categorical variables
-        # [✓] Scale/normalize features (essential for NN!)
-        # [✓] Handle class imbalance (if needed)
-    ## handling
-    ## filter columns using missing threshold
     kept_cols = nan_counts[nan_counts < MISSING_TRESHOLD]
-    kept_cols.drop(['ID', 'TARGET'], inplace=True)
+    kept_cols.drop(['ID'], inplace=True)
 
-    # kept_num_cols = kept_cols[ kept_cols.index.map(lambda x: x in num_cols) ]
+    kept_num_cols = kept_cols[ kept_cols.index.map(lambda x: x in num_cols) ]
     kept_cat_cols = kept_cols[ kept_cols.index.map(lambda x: x in cat_cols) ]
 
-    # sum_impute = pd.Series(0.0, index=kept_num_cols.index)
-    # total_impute = pd.Series(0.0, index=kept_num_cols.index)
-
-    unique_categories = {}
-    for cat in kept_cat_cols.index.to_list():
-        unique_categories[cat] = set()
-
-
-    chunks  = pd.read_csv(
-        "data/bank_data_train.csv",
-        chunksize=100_000,
-        dtype=dtypes.to_dict(),
-        usecols=kept_cols.index.to_list()
-    )
-
-
-    for chunk in chunks:
-
-        # sum_impute   += chunk[kept_num_cols.index.to_list()].notna().sum()
-        # total_impute += chunk[kept_num_cols.index.to_list()].notna().count()
-
-        for col in kept_cat_cols.index.to_list():
-            unique_categories[col].add(CAT_NA_VALUE)
-            unique_categories[col].update(
-                chunk[col].fillna(CAT_NA_VALUE).astype(str).unique()
-            )
-
-    # mean_impute = sum_impute / total_impute
-
-    categories_for_e= [
-        sorted(list(unique_categories[cat]))
-        for cat in kept_cat_cols.index.to_list()
-    ]
-
-    # Change this line:
-    encoder = OrdinalEncoder(
-        categories=categories_for_e, 
-        handle_unknown="use_encoded_value", # Fixed parameter
-        unknown_value=-1,                   # Required when using 'use_encoded_value'
-        encoded_missing_value=-1
-    )
-    df = pd.read_csv('data/bank_data_train.csv', usecols=kept_cat_cols.index.to_list(), nrows=100)
-    encoder.fit(df)
-    del df
-
-    train_data = None
-    chunks  = pd.read_csv(
-        "data/bank_data_train.csv",
-        chunksize=100_000,
-        dtype=dtypes.to_dict(),
-        usecols=kept_cols.index.to_list()
-    )
-    # use only one chunk to train lgm model!
-    print("hana!")
-    for chunk in chunks:
-        clean_chunk = chunk[chunk[target_col].notna()]
-        if not clean_chunk.empty:
-            train_data = clean_chunk
-            break
-        # if not clean_chunk.empty:
-        #     train_data = clean_chunk
-        #     break
-
-
-    
-
-
-
-
-    # categorical_cols = df.select_dtypes(exclude="number").columns.to_list()
-    # numerical_cols   = df.select_dtypes(include='number').columns.to_list()
-    # numerical_cols   = [c for c in numerical_cols if c not in ("ID", "TARGET")]
-    # dtypes_dict      = df.dtypes.to_dict()
-    # nan_counts       = pd.Series(0.0, index=df.columns.to_list())
-
-    # del df
-    # samples = 0
-
-    # chunks = pd.read_csv(
-    #     "data/bank_data_train.csv",
-    #     dtype=dtypes_dict,
-    #     chunksize=100_000
-    # )
-    # ## first pass
-    # for chunk in chunks:
-    #     nan_counts += chunk.isna().sum()
-    #     samples    += len(chunk)
-
-    # nan_counts    = (nan_counts / samples) * 100
-    # kep_cols       = nan_counts[nan_counts <= 40].index
-    # # print("NaN percentage of each feature")
-    # # print(nan_counts)
-
-
-    # kept_num_cols = [n for n in numerical_cols if n in kep_cols]
-    # kept_cat_cols = [n for n in categorical_cols if n in kep_cols]
-
-    # chunks = pd.read_csv(
-    #     "data/bank_data_train.csv",
-    #     dtype=dtypes_dict,
-    #     chunksize=100_000
-    # )
-
-
     # unique_categories = {}
-    # for cat in kept_cat_cols:
+    # for cat in kept_cat_cols.index.to_list():
     #     unique_categories[cat] = set()
 
+    # chunks  = pd.read_csv(
+    #     "data/bank_data_train.csv",
+    #     chunksize=100_000,
+    #     dtype=dtypes.to_dict(),
+    #     usecols=kept_cols.index.to_list()
+    # )
 
-    # sum_x   = pd.Series(0.0, index=kept_num_cols)
-    # sum_x2  = pd.Series(0.0, index=kept_num_cols)
     # for chunk in chunks:
-    #     # ---- categorical stats ----
 
-    #     for col in kept_cat_cols:
+    #     for col in kept_cat_cols.index.to_list():
     #         unique_categories[col].add(CAT_NA_VALUE)
     #         unique_categories[col].update(
     #             chunk[col].fillna(CAT_NA_VALUE).astype(str).unique()
     #         )
-    #     # ---- numerical stats ----
-    #     chunk[kept_num_cols] = chunk[kept_num_cols].fillna(0.0)
 
-    #     sum_x   += chunk[kept_num_cols].sum(axis=0)
-    #     sum_x2  += chunk[kept_num_cols].pow(2).sum(axis=0)
-
-    # # print("==============================sum of all kept numerical features==============================")
-    # categories_for_ohe = [
+    # categories_for_e= [
     #     sorted(list(unique_categories[cat]))
-    #     for cat in kept_cat_cols
+    #     for cat in kept_cat_cols.index.to_list()
     # ]
-    # encoder = OneHotEncoder(
-    #     categories=categories_for_ohe,
-    #     handle_unknown="ignore",
-    #     sparse_output=False
+
+    # encoder = OrdinalEncoder(
+    #     categories=categories_for_e, 
+    #     handle_unknown="use_encoded_value", # Fixed parameter
+    #     unknown_value=-1,                   # Required when using 'use_encoded_value'
+    #     encoded_missing_value=-1
     # )
-
-
-    # df = pd.read_csv('data/bank_data_train.csv', usecols=kept_cat_cols, nrows=100)
+    # df = pd.read_csv('data/bank_data_train.csv', usecols=kept_cat_cols.index.to_list(), nrows=10)
     # encoder.fit(df)
     # del df
+    ## 50% or more missing values
+    cols_gte_50 = kept_num_cols[kept_num_cols >= 50].index.tolist()
+    missing_flag_cols = []
+
+    for col in cols_gte_50:
+
+    # --- For value AUC ---
+        y_true_val = []
+        y_score_val = []
+
+        # --- For missing AUC ---
+        y_true_miss = []
+        y_score_miss = []
+
+        for chunk in pd.read_csv(
+            "data/bank_data_train.csv",
+            chunksize=100_000,
+            dtype=dtypes.to_dict(),
+            usecols=[col, "TARGET"]
+        ):
+            notna_mask = chunk[col].notna()
+
+            if notna_mask.any():
+                y_true_val.append(chunk.loc[notna_mask, "TARGET"].values)
+                y_score_val.append(chunk.loc[notna_mask, col].values)
+
+            # ---------- MISSINGNESS AUC ----------
+            miss_flag = chunk[col].isna().astype(int)
+
+            # keep all rows (as long as TARGET exists)
+            y_true_miss.append(chunk["TARGET"].values)
+            y_score_miss.append(miss_flag.values)
+
+        # ----- Compute AUCs safely -----
+        auc_value = None
+        if len(y_true_val) > 0:
+            auc_value = roc_auc_score(
+                np.concatenate(y_true_val),
+                np.concatenate(y_score_val)
+            )
+
+        auc_missing = roc_auc_score(
+            np.concatenate(y_true_miss),
+            np.concatenate(y_score_miss)
+        )
+
+        print(
+            f"{col:35s} | "
+                f"AUC_value: {auc_value:.4f} | "
+            f"AUC_missing: {auc_missing:.4f}, missing value: {nan_counts[col]}%"
+        )
+        if auc_missing < 0.55 and auc_value < 0.55:
+            kept_cols.drop(col)
+        if auc_value < 0.55 and auc_missing >= 0.55:
+            missing_flag_cols.append(col)
+
+    cat_cols_gte_50 = kept_cat_cols[kept_cat_cols > 50].index.tolist()
+
+    for col in cat_cols_gte_50:
+        # Dictionary to accumulate counts of (category, target) pairs
+        contingency_counts = {}
+
+        total_samples = 0
+
+        for chunk in pd.read_csv(
+            "data/bank_data_train.csv",
+            chunksize=100_000,
+            dtype=dtypes.to_dict(),
+            usecols=[col, "TARGET"]
+        ):
+            # Drop rows with missing TARGET
+            chunk = chunk.dropna(subset=["TARGET"])
+
+            # Treat missing in feature as separate category
+            chunk[col] = chunk[col].fillna("MISSING")
+
+            # Count occurrences of (category, target)
+            counts = chunk.groupby([col, "TARGET"]).size()
+
+            # Accumulate counts
+            for (category, target_val), count in counts.items():
+                contingency_counts[(category, target_val)] = contingency_counts.get((category, target_val), 0) + count
+
+            total_samples += len(chunk)
+
+        # Build contingency table DataFrame
+        categories = sorted(set([k[0] for k in contingency_counts.keys()]))
+        targets = sorted(set([k[1] for k in contingency_counts.keys()]))
+
+        table = pd.DataFrame(0, index=categories, columns=targets, dtype=int)
+
+        for (category, target_val), count in contingency_counts.items():
+            table.at[category, target_val] = count
+
+        # Run Chi-square test
+        chi2, p, dof, expected = chi2_contingency(table)
+
+        # Calculate Cramér’s V
+        k = min(table.shape)  # min of #rows or #cols
+        V = cramers_v(chi2, total_samples, k)
+
+        print(f"{col:35s} | p-value: {p:.6f} | Cramér’s V: {V:.4f} | Samples: {total_samples}")           
 
 
-    # mean     = sum_x / samples
-    # variance = (sum_x2 / samples) - (mean ** 2)
-    # std_dev  = np.sqrt(variance)
 
-    # # kept_num_cols = variance[variance > 1e-4].index.to_list()
 
-    # x_shape = len(encoder.get_feature_names_out(kept_cat_cols)) + len(kept_num_cols)
-
-    # preprocessor = {
-    #     "mean":mean.to_numpy(),
-    #     "std" : std_dev,
-    #     "encoder":encoder,
-    #     "kept_num_cols":kept_num_cols,
-    #     "kept_cat_cols":kept_cat_cols,
-    #     'dtypes':dtypes_dict,
-    #     'x_shape':x_shape
-    # }
-
-    # jb.dump(preprocessor, "preprocessor.joblib")
-    # print("preprocessor params saved.")
 if __name__ == "__main__":
     main()
