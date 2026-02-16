@@ -51,8 +51,6 @@ def cramers_v(chi2, n, k):
 #     df.loc[df[target_col].isna(), target_col] = predictions
 #     return df[target_col]
 
-
-
 def main():
     dtypes     = None
     nan_counts = None
@@ -185,52 +183,55 @@ def main():
         if auc_value < 0.55 and auc_missing >= 0.55:
             missing_flag_cols.append(col)
 
-    cat_cols_gte_50 = kept_cat_cols[kept_cat_cols > 50].index.tolist()
+    # cat_cols_gte_50 = kept_cat_cols[kept_cat_cols > 50].index.tolist()
 
-    for col in cat_cols_gte_50:
-        # Dictionary to accumulate counts of (category, target) pairs
-        contingency_counts = {}
+    # for col in cat_cols_gte_50:
+    #     # Dictionary to accumulate counts of (category, target) pairs
+    #     contingency_counts = {}
 
-        total_samples = 0
+    #     total_samples = 0
 
-        for chunk in pd.read_csv(
-            "data/bank_data_train.csv",
-            chunksize=100_000,
-            dtype=dtypes.to_dict(),
-            usecols=[col, "TARGET"]
-        ):
-            # Drop rows with missing TARGET
-            chunk = chunk.dropna(subset=["TARGET"])
+    #     for chunk in pd.read_csv(
+    #         "data/bank_data_train.csv",
+    #         chunksize=100_000,
+    #         dtype=dtypes.to_dict(),
+    #         usecols=[col, "TARGET"]
+    #     ):
+    #         # Drop rows with missing TARGET
+    #         chunk = chunk.dropna(subset=["TARGET"])
 
-            # Treat missing in feature as separate category
-            chunk[col] = chunk[col].fillna("MISSING")
+    #         # Treat missing in feature as separate category
+    #         chunk[col] = chunk[col].fillna("MISSING")
 
-            # Count occurrences of (category, target)
-            counts = chunk.groupby([col, "TARGET"]).size()
+    #         # Count occurrences of (category, target)
+    #         counts = chunk.groupby([col, "TARGET"]).size()
 
-            # Accumulate counts
-            for (category, target_val), count in counts.items():
-                contingency_counts[(category, target_val)] = contingency_counts.get((category, target_val), 0) + count
+    #         # Accumulate counts
+    #         for (category, target_val), count in counts.items():
+    #             contingency_counts[(category, target_val)] = contingency_counts.get((category, target_val), 0) + count
 
-            total_samples += len(chunk)
+    #         total_samples += len(chunk)
 
-        # Build contingency table DataFrame
-        categories = sorted(set([k[0] for k in contingency_counts.keys()]))
-        targets = sorted(set([k[1] for k in contingency_counts.keys()]))
+    #     # Build contingency table DataFrame
+    #     categories = sorted(set([k[0] for k in contingency_counts.keys()]))
+    #     targets = sorted(set([k[1] for k in contingency_counts.keys()]))
 
-        table = pd.DataFrame(0, index=categories, columns=targets, dtype=int)
+    #     table = pd.DataFrame(0, index=categories, columns=targets, dtype=int)
 
-        for (category, target_val), count in contingency_counts.items():
-            table.at[category, target_val] = count
+    #     for (category, target_val), count in contingency_counts.items():
+    #         table.at[category, target_val] = count
 
-        # Run Chi-square test
-        chi2, p, dof, expected = chi2_contingency(table)
+    #     # Run Chi-square test
+    #     chi2, p, dof, expected = chi2_contingency(table)
 
-        # Calculate Cramér’s V
-        k = min(table.shape)  # min of #rows or #cols
-        V = cramers_v(chi2, total_samples, k)
+    #     # Calculate Cramér’s V
+    #     k = min(table.shape)  # min of #rows or #cols
+    #     V = cramers_v(chi2, total_samples, k)
 
-        print(f"{col:35s} | p-value: {p:.6f} | Cramér’s V: {V:.4f} | Samples: {total_samples}")           
+    #     print(f"{col:35s} | p-value: {p:.6f} | Cramér’s V: {V:.4f} | Samples: {total_samples}")           
+
+
+
 
 
 
