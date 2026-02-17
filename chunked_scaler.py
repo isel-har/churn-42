@@ -1,0 +1,9 @@
+
+
+class ChunkedScaler:
+    def __init__(self):
+        ...
+    def fit(self, filepath, cols=[], scaler_dict=None):
+        ...
+    def transform(self):
+        ...
