@@ -22,6 +22,10 @@ def main():
             'cat':{
                 (0.31, 0.50):SimpleImputer(strategy='constant', fill_value='MISSING')
             }
+        },
+        'encoding': {
+            'column_name': None,
+            'column_name_': None
         }
     }
     try:
