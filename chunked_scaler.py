@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 
 
-class ChunkedScaler:
+class ChunkedStandardScaler:
     def __init__(self, chunksize=10000):
         self.chunksize = chunksize
         self.mean_ = None
@@ -18,7 +18,7 @@ class ChunkedScaler:
 
         for value in imputer.num_imputers.values():
             cols = value['cols']
-            obj = value['imputer']
+            obj  = value['imputer']
             X.loc[:, cols] = obj.transform(X[cols])
 
         return X
@@ -45,13 +45,11 @@ class ChunkedScaler:
 
         self.mean_ = total_sum / total_rows
         self.total_rows_ = total_rows
-        self.columns_ = self.mean_.index
 
 
-        total_var = np.zeros(len(self.columns_))
+        total_var = np.zeros(len(cols))
 
-        for chunk in pd.read_csv(filepath, usecols=self.columns_, chunksize=self.chunksize):
-
+        for chunk in pd.read_csv(filepath, usecols=cols, chunksize=self.chunksize):
             X = chunk.copy()
             X = self._apply_imputer(X, imputer)
             X = X.astype(float)
@@ -64,33 +62,49 @@ class ChunkedScaler:
 
         std__[std__ == 0] = 1.0
 
-        self.std_ = pd.Series(std, index=self.columns_)
+        self.std_ = pd.Series(std__, index=cols)
 
+        print("scaler step passed")
         return self
 
-    def transform(self, filepath, output_path=None, imputer=None):
-        if self.mean_ is None or self.std_ is None:
-            raise RuntimeError("Scaler has not been fitted.")
 
-        chunks = []
+    def transform(self, chunk):
+        if chunk is None:
+            return None
 
-        for chunk in pd.read_csv(filepath, usecols=self.columns_, chunksize=self.chunksize):
+        print(chunk)
+        # print(chunk - self.mean_)
+        # print(self.mean_)
 
-            X = chunk.copy()
-            X = self._apply_imputer(X, imputer)
-            X = X.astype(float)
+        # print("scaling...")
+        # chunk = (chunk - self.mean_) / self.std_
 
-            X_scaled = (X - self.mean_) / self.std_
+        # print("scaler transform completed")
+        return chunk
 
-            if output_path:
-                X_scaled.to_csv(
-                    output_path,
-                    mode="a",
-                    header=not pd.io.common.file_exists(output_path),
-                    index=False
-                )
-            else:
-                chunks.append(X_scaled)
+    # def transform(self, filepath, output_path=None, imputer=None):
+    #     if self.mean_ is None or self.std_ is None:
+    #         raise RuntimeError("Scaler has not been fitted.")
 
-        if not output_path:
-            return pd.concat(chunks, ignore_index=True)
+    #     chunks = []
+
+    #     for chunk in pd.read_csv(filepath, usecols=self.columns_, chunksize=self.chunksize):
+
+    #         X = chunk.copy()
+    #         X = self._apply_imputer(X, imputer)
+    #         X = X.astype(float)
+
+    #         X_scaled = (X - self.mean_) / self.std_
+
+    #         if output_path:
+    #             X_scaled.to_csv(
+    #                 output_path,
+    #                 mode="a",
+    #                 header=not pd.io.common.file_exists(output_path),
+    #                 index=False
+    #             )
+    #         else:
+    #             chunks.append(X_scaled)
+
+    #     if not output_path:
+    #         return pd.concat(chunks, ignore_index=True)

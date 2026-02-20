@@ -28,7 +28,8 @@ class ChunkedImputer:
             chunk = chunk.drop(columns=to_drop)
 
             if self.missing_counts_ is None:
-                self.nem_cols = chunk.select_dtypes(include='number').columns.tolist()
+                self.nem_cols = sorted(chunk.select_dtypes(include='number').columns.tolist())
+                print(self.nem_cols)
                 self.missing_counts_  = chunk.isnull().sum()
             else:
                 self.missing_counts_ += chunk.isnull().sum()
@@ -77,12 +78,30 @@ class ChunkedImputer:
                 imputer.fit(sample[cols])
                 self.cat_imputers[index] = {'cols':cols, 'imputer':imputer}
 
-
+        print("imputation step passed")
         return self
 
 
-    def tranform(self, filepath, output_path=None):
-        ...
+    def transform(self, chunk):
+        if chunk is None:
+            return None
+
+        for key, value in self.cat_imputers.items():
+                imputer = value['imputer']
+                cols    = value['cols']
+                chunk[cols] = imputer.transform(chunk[cols])
+
+        for key, value in self.num_imputers.items():
+                imputer = value['imputer']
+                cols    = value['cols']
+                chunk[cols] = imputer.transform(chunk[cols])
+
+
+        print("impute transfrom completed")
+        return chunk
+
+
+        
 
 
 
