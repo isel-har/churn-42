@@ -63,17 +63,28 @@ class ChunkedStandardScaler:
         std__[std__ == 0] = 1.0
 
         self.std_ = pd.Series(std__, index=cols)
-
-        print("scaler step passed")
         return self
 
 
+    # def transform(self, chunk):
+    #     if chunk is None:
+    #         return None
+
+    #     chunk = (chunk - self.mean_) / self.std_
+    #     return chunk
     def transform(self, chunk):
         if chunk is None:
             return None
 
-        chunk = (chunk - self.mean_) / self.std_
-        return chunk
+        if self.mean_ is None or self.std_ is None:
+            raise ValueError("The scaler has not been fitted yet.")
+
+        chunk = chunk.copy()
+
+        # Align columns explicitly
+        chunk = chunk[self.mean_.index]
+
+        return (chunk - self.mean_) / self.std_
 
     # def transform(self, filepath, output_path=None, imputer=None):
     #     if self.mean_ is None or self.std_ is None:

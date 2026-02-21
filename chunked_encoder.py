@@ -39,10 +39,6 @@ class ChunkedEncoder:
             encoder.fit(sample[[col]])
             self.encoders_map[col] = encoder
 
-        del sample
-        
-        print("encoding step passed")
-
         return self
 
 
@@ -78,6 +74,4 @@ class ChunkedEncoder:
             
             # Add encoded columns
             chunk = pd.concat([chunk, encoded_df], axis=1)
-
-        print("encode transform completed")
         return chunk

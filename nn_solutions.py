@@ -1,100 +1,65 @@
-import os
-os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
+# import os
+# os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
+import sys
 
 import pandas as pd
-import numpy as np
 import joblib
+import numpy as np
 
 
 from sklearn.neural_network import MLPClassifier
-from keras.layers import Dense
-from keras import Sequential
-from keras.losses import BinaryCrossentropy
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score#, log_loss
+from chunked_preprocessor import ChunkedPreprocessor
 
-CAT_NA_VALUE = "__MISSING__"
-
-preprocessor = joblib.load("preprocessor.joblib")
-
-mean          = preprocessor['mean']
-std_dev       = preprocessor['std']
-kept_num_cols = preprocessor['kept_num_cols']
+# from keras.layers import Dense
+# from keras import Sequential
+# from keras.losses import BinaryCrossentropy
+# from sklearn.model_selection import train_test_split
+# from sklearn.metrics import accuracy_score#, log_loss
 
 
-kept_cat_cols = preprocessor['kept_cat_cols']
-encoder       = preprocessor['encoder']
+def main():
+    if len(sys.argv) != 3:
+        sys.exit(1)
+    try:
+        preprocessor : ChunkedPreprocessor = joblib.load("preprocessor.pkl")
+        x_shape = len(preprocessor.imputer.kept_columns)
 
-dtype   = preprocessor['dtypes']
-x_shape = preprocessor['x_shape']
+        # usecols = preprocessor.imputer.kept_columns.index.to_list().copy()
+        # usecols.append('TARGET')
 
+        # sklearn_sol = MLPClassifier(hidden_layer_sizes=(64, 32), activation='relu', solver='sgd', batch_size=128)
+        # classes     = np.array([0, 1])
 
+        # keras_sol   = Sequential([
+        #         Dense(64, activation='relu', input_shape=(x_shape,)),
+        #         Dense(32, activation='relu'),
+        #         Dense(1, activation='sigmoid')
+        # ])
 
-sklearn_sol = MLPClassifier(hidden_layer_sizes=(64, 32), activation='relu', solver='sgd', batch_size=128)
-classes     = np.array([0, 1])
+        # keras_sol.compile(
+        #     optimizer='adam',
+        #     loss=BinaryCrossentropy(from_logits=False),
+        #     metrics=['accuracy'],
+        # )
 
-keras_sol   = Sequential([
-        Dense(64, activation='relu', input_shape=(x_shape,)),
-        Dense(32, activation='relu'),
-        Dense(1, activation='sigmoid')
-])
+        # xn = None
+        # for chunk in pd.read_csv(sys.argv[1], chunksize=int(sys.argv[2]), usecols=usecols):
 
-keras_sol.compile(
-    optimizer='adam',
-    loss=BinaryCrossentropy(from_logits=False),
-    metrics=['accuracy'],
-)
+        #     X = preprocessor.transform(chunk)
+        #     if xn is None:
+        #         xn = X.isnull().sum()
+        #     else:
+        #         xn += X.isnull().sum()
+        #     # y = chunk['TARGET'].to_numpy()
+     
 
+        # print("sum of x nan :", xn)
 
-chunks = pd.read_csv('data/bank_data_train.csv', dtype=dtype, chunksize=100_000)
-for i, chunk in enumerate(chunks, start=1):
-    chunk[kept_num_cols] = chunk[kept_num_cols].fillna(0.0)
-    chunk[kept_cat_cols] = chunk[kept_cat_cols].fillna(CAT_NA_VALUE)
-
-    X_cat_enc = encoder.transform(chunk[kept_cat_cols])
-    X_cat_enc = pd.DataFrame(X_cat_enc, columns=encoder.get_feature_names_out(kept_cat_cols), index=chunk.index)
-    X_num = (chunk[kept_num_cols] - mean) / std_dev
-
-    X    = pd.concat([X_num, X_cat_enc], axis=1)
-    y    = chunk['TARGET']
-
-    X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, stratify=y)
-
-    print(f"chunk __________[{i}]__________")
-
-    print("fit keras sequential solution")
-    keras_sol.fit(
-        X_train, y_train,
-        epochs=10,
-        batch_size=128,
-        validation_data=(X_val, y_val)
-    )
-    # print("fit Sklearn MLPClassifier solution")
-    # sklearn_sol.partial_fit(X_train, y_train, classes=classes)
+    except Exception as e:
+        print(str(e))
 
 
-test_df = pd.read_csv("data/bank_data_test.csv")
 
-test_df[kept_num_cols] = test_df[kept_num_cols].fillna(0.0)
-test_df[kept_cat_cols] = test_df[kept_cat_cols].fillna(CAT_NA_VALUE)
 
-X_cat_enc = encoder.transform(test_df[kept_cat_cols])
-
-X_cat_enc = pd.DataFrame(X_cat_enc, columns=encoder.get_feature_names_out(kept_cat_cols), index=test_df.index)
-X_num     = (test_df[kept_num_cols] - mean) / std_dev
-
-X         = pd.concat([X_num, X_cat_enc], axis=1)
-
-# y_pred = keras_sol.predict(X)
-## use numpy argmax
-
-targets = keras_sol.predict(X).reshape(-1)
-data = {
-    "ID": [n for n in range(0, len(targets))],
-    "TARGET":targets
-}
-
-df = pd.DataFrame(data=data)
-
-df.to_csv("predictions.csv", index=False)
-print("CSV file saved.")
+if __name__ == '__main__':
+    main()
