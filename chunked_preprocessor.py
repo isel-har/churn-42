@@ -1,7 +1,6 @@
+from chunked_scaler import ChunkedStandardScaler
 from chunked_imputer import ChunkedImputer
 from chunked_encoder import ChunkedEncoder
-from chunked_scaler import ChunkedStandardScaler
-# import numpy as np
 
 
 class ChunkedPreprocessor:
@@ -28,19 +27,19 @@ class ChunkedPreprocessor:
 
         print("transforming...")
         cols_encode = self.imputer.columns_to_encode
-        cols_scale  = self.imputer.nem_cols
+        cols_scale  = self.imputer.columns_to_scale
 
         chunk = self.imputer.transform(chunk)
+
         """
             transform/change only selected indexes
-        """
+        # """
         chunk[cols_encode] = self.encoder.transform(chunk[cols_encode])
+
         """
             the problem probably here (columns problem)
         """
-        # print(chunk.columns.to_list())
-        print(cols_scale)
-        self.scaler.transform(chunk[cols_scale])
-        # chunk[cols_scale]  = self.scaler.transform(chunk[cols_scale])
+
+        chunk[cols_scale] = self.scaler.transform(chunk[cols_scale])
         return chunk
 

@@ -25,7 +25,7 @@ class ChunkedStandardScaler:
 
     def fit(self, filepath, imputer=None):
 
-        cols = imputer.nem_cols if imputer else None
+        cols = imputer.columns_to_scale if imputer else None
 
         total_sum = None
         total_rows = 0
@@ -72,14 +72,7 @@ class ChunkedStandardScaler:
         if chunk is None:
             return None
 
-        print(chunk)
-        # print(chunk - self.mean_)
-        # print(self.mean_)
-
-        # print("scaling...")
-        # chunk = (chunk - self.mean_) / self.std_
-
-        # print("scaler transform completed")
+        chunk = (chunk - self.mean_) / self.std_
         return chunk
 
     # def transform(self, filepath, output_path=None, imputer=None):

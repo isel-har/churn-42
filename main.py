@@ -1,16 +1,17 @@
-from sklearn.compose import ColumnTransformer
-
+# import os
 from chunked_preprocessor import ChunkedPreprocessor
 from sklearn.impute import KNNImputer, SimpleImputer
 from sklearn.preprocessing import OrdinalEncoder
-import joblib
+# import joblib
 import sys
 import pandas as pd
 
-# import
+from keras.models import Sequential
+from keras.layers import Dense
+from keras.losses import BinaryCrossentropy
 
 
-# pd.set_option('display.max_columns', None)
+pd.set_option('display.max_columns', None)
 
 def main():
 
@@ -35,13 +36,25 @@ def main():
         preprocessor.fit(sys.argv[1], to_drop=['ID', 'TARGET'], strategies=strategies)
 
 
+        usecols = preprocessor.imputer.kept_columns.index.tolist().copy()
+        X_cols  = preprocessor.imputer.kept_columns.index.tolist()
+        usecols.append('TARGET')
 
-        usecols = preprocessor.imputer.kept_columns.index.tolist()
-        sample =  pd.read_csv(sys.argv[1], nrows=1000, usecols=usecols)
-        
-        print("transforming sample ...")
-        sample = preprocessor.transform(sample)
-        # print(sample.head(50))
+        model = Sequential([
+            Dense(64, activation='relu', input_shape=(len(X_cols),)),
+            Dense(32, activation='relu'),
+            Dense(1, activation='sigmoid')
+        ])
+        model.compile(optimizer='adam', metrics=['accuracy'], loss=BinaryCrossentropy())
+        for chunk in pd.read_csv(sys.argv[1], chunksize=10000, usecols=usecols):
+            chunk[X_cols] = preprocessor.transform(chunk[X_cols])
+            X = chunk[X_cols].to_numpy()
+            y = chunk['TARGET'].to_numpy()
+            model.fit(X, y, epochs=50)
+
+
+
+
 
 
 

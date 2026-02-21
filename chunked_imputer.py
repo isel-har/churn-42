@@ -29,7 +29,6 @@ class ChunkedImputer:
 
             if self.missing_counts_ is None:
                 self.nem_cols = sorted(chunk.select_dtypes(include='number').columns.tolist())
-                print(self.nem_cols)
                 self.missing_counts_  = chunk.isnull().sum()
             else:
                 self.missing_counts_ += chunk.isnull().sum()
@@ -42,6 +41,8 @@ class ChunkedImputer:
         self.columns_to_impute_ = self.kept_columns[(self.kept_columns > 0) & (self.kept_columns < self.missing_threshold)]
         self.columns_to_encode  = [c for c in self.kept_columns.index.tolist() if c not in self.nem_cols]
 
+        self.columns_to_scale   = [c for c in self.kept_columns.index.tolist() if c in self.nem_cols]# update
+
         del missing_ratio
 
         if strategies is None:
@@ -50,8 +51,8 @@ class ChunkedImputer:
         sample = pd.read_csv(filepath, usecols=self.columns_to_impute_.index.tolist(), nrows=strategies['samplesize'])
         strategies.pop('samplesize', None)
 
-        self.num_cols_impute = [c for c in self.columns_to_impute_.index.tolist() if c in self.nem_cols]
-        self.cat_cols_impute = [c for c in self.columns_to_impute_.index.tolist() if c not in self.nem_cols]
+        self.num_cols_impute = [c for c in self.columns_to_impute_.index.tolist() if c in self.columns_to_scale]
+        self.cat_cols_impute = [c for c in self.columns_to_impute_.index.tolist() if c not in self.columns_to_scale]
 
 
         for index, (range, imputer) in enumerate(strategies['num'].items()):
