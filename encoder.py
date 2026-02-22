@@ -44,7 +44,6 @@ class Encoder:
                 self.unique_categories[col].update(list(chunk[col].astype(str).unique()))
 
 
-
         for col, encoder in encoders.items():
             categories = sorted(self.unique_categories[col])
             encoder.set_params(categories=[categories])

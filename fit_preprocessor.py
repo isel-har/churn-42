@@ -1,12 +1,12 @@
-# import os
 from chunked_preprocessor import ChunkedPreprocessor
 from sklearn.impute import KNNImputer, SimpleImputer
 from sklearn.preprocessing import OrdinalEncoder
-import sys
+
 import pandas as pd
+import joblib
+import sys
 # from imputer import Imputer
 # from encoder import Encoder
-# import joblib
 
 # from keras.models import Sequential
 # from keras.layers import Dense
@@ -15,7 +15,6 @@ import pandas as pd
 pd.set_option('display.max_rows', None)
 # pd.set_option('display.max_rows', None)
 
-
 def main():
 
     if len(sys.argv) != 2:
@@ -23,11 +22,11 @@ def main():
     
     strategies = {
         'imputers':{
-            (0, 0.25):(SimpleImputer(strategy='mean'), SimpleImputer(strategy="most_frequent")),
+            (0, 0.25):(SimpleImputer(strategy='mean'), SimpleImputer(strategy="constant", fill_value='MISSING')),
             (0.25, 0.50): (KNNImputer(n_neighbors=6), SimpleImputer(strategy="constant", fill_value='MISSING'))
         },
         'encoders':{
-            'CLNT_JOB_POSITION':OrdinalEncoder(),
+            # 'CLNT_JOB_POSITION':OrdinalEncoder(),
             'PACK':OrdinalEncoder()
         }
     }
@@ -35,20 +34,12 @@ def main():
 
         preprocessor = ChunkedPreprocessor(chunksize=100_000)
 
-        preprocessor.fit(sys.argv[1], to_drop=['ID', 'TARGET'], strategies=strategies)
+        preprocessor.fit(sys.argv[1], to_drop=['ID', 'TARGET', 'CLNT_JOB_POSITION'], strategies=strategies)
 
-        # x_nans = None
-
-        sample = pd.read_csv(sys.argv[1], nrows=1000, usecols=preprocessor.imputer.columns.index.to_list())
-
-        X = preprocessor.transform(sample)
-
-        x_nans = X.isnull().sum()
-        print(x_nans)
-
+        joblib.dump(preprocessor, "preprocessor.pkl")
+        
     except Exception as e:
         print("exception :", str(e))
-
 
 
 if __name__ == "__main__":

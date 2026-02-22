@@ -9,8 +9,7 @@ class ChunkedPreprocessor:
 
         self.imputer = Imputer(missing_threshold, chunksize)
         self.encoder = Encoder(chunksize)
-        self.scaler  = Scaler(chunksize)
-
+        self.scaler  = Scaler(chunksize=10000)
 
 
     def fit(self, filepath, to_drop=[], strategies=None, sample_size=10_000):
@@ -22,8 +21,9 @@ class ChunkedPreprocessor:
         self.encoder.fit(filepath, imputer=self.imputer, encoders=strategies['encoders'])
         self.scaler.fit(filepath, imputer=self.imputer)
 
-        return self
+        ## scaler fitting takes too long!
 
+        return self
 
     def transform(self, chunk):
 
@@ -34,7 +34,6 @@ class ChunkedPreprocessor:
         # print(scale_cols)
         chunk = self.imputer.transform(chunk)
         chunk = self.encoder.transform(chunk)
-
 
         chunk[scale_cols] = self.scaler.transform(chunk[scale_cols])
         return chunk

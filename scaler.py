@@ -1,7 +1,6 @@
 import pandas as pd
 import numpy as np
 
-
 class Scaler:
     def __init__(self, chunksize=10000):
         self.chunksize = chunksize
@@ -24,47 +23,42 @@ class Scaler:
         return X
 
 
-
     def fit(self, filepath, imputer=None):
 
-        self.cols = [c for c in imputer.columns.index.tolist() if c in imputer.num_cols]
-        total_sum = None
-        total_rows = 0
+        self.cols = [c for c in imputer.columns.index.tolist()
+                    if c in imputer.num_cols]
 
-        for chunk in pd.read_csv(filepath, usecols=self.cols, chunksize=self.chunksize):
+        n_total = 0
+        mean = np.zeros(len(self.cols))
+        M2 = np.zeros(len(self.cols))  # sum of squared deviations
 
-            X = chunk.copy()
-            X = self._apply_imputer(X, imputer)
-            X = X.astype(float)
+        for chunk in pd.read_csv(filepath,
+                                usecols=self.cols,
+                                chunksize=self.chunksize):
 
-            if total_sum is None:
-                total_sum = X.sum(axis=0)
-            else:
-                total_sum += X.sum(axis=0)
+            X = self._apply_imputer(chunk, imputer)
 
-            total_rows += len(X)
+            # Avoid unnecessary copy
+            values = X[self.cols].to_numpy(dtype=float, copy=False)
 
-        self.mean_ = total_sum / total_rows
-        self.total_rows_ = total_rows
+            for row in values:
+                n_total += 1
+                delta = row - mean
+                mean += delta / n_total
+                delta2 = row - mean
+                M2 += delta * delta2
 
+        variance = M2 / n_total
+        std = np.sqrt(variance)
+        std[std == 0] = 1.0
 
-        total_var = np.zeros(len(self.cols))
+        self.mean_ = pd.Series(mean, index=self.cols)
+        self.std_ = pd.Series(std, index=self.cols)
+        self.total_rows_ = n_total
 
-        for chunk in pd.read_csv(filepath, usecols=self.cols, chunksize=self.chunksize):
-            X = chunk.copy()
-            X = self._apply_imputer(X, imputer)
-            X = X.astype(float)
-
-            diff = X.values - self.mean_.values
-            total_var += (diff ** 2).sum(axis=0)
-
-        variance = total_var / self.total_rows_
-        std__ = np.sqrt(variance)
-
-        std__[std__ == 0] = 1.0
-
-        self.std_ = pd.Series(std__, index=self.cols)
         return self
+
+
 
     def transform(self, chunk):
         if chunk is None:
