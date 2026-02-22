@@ -1,47 +1,41 @@
-from chunked_scaler import ChunkedStandardScaler
-from chunked_imputer import ChunkedImputer
-from chunked_encoder import ChunkedEncoder
+from scaler import Scaler
+from encoder import Encoder
+from imputer import Imputer
 
 
 class ChunkedPreprocessor:
 
     def __init__(self, missing_threshold=0.5, chunksize=10000):
 
-        self.imputer = ChunkedImputer(missing_threshold, chunksize)
-        self.encoder = ChunkedEncoder(chunksize)
-        self.scaler  = ChunkedStandardScaler(chunksize)
+        self.imputer = Imputer(missing_threshold, chunksize)
+        self.encoder = Encoder(chunksize)
+        self.scaler  = Scaler(chunksize)
 
 
-    def fit(self, filepath, to_drop=[], strategies=None):
+
+    def fit(self, filepath, to_drop=[], strategies=None, sample_size=10_000):
+        if not strategies:
+            raise Exception("strategies dict required.")
 
 
-        self.imputer.fit(filepath, to_drop=to_drop, strategies=strategies['imputation'])
-        self.encoder.fit(filepath, imputer=self.imputer, strategies=strategies['encoding'])
+        self.imputer.fit(filepath, to_drop, strategies['imputers'], sample_size)
+        self.encoder.fit(filepath, imputer=self.imputer, encoders=strategies['encoders'])
         self.scaler.fit(filepath, imputer=self.imputer)
 
         return self
 
-    # def transform(self, filepath, output_path=None):
-    #     ...
 
     def transform(self, chunk):
 
-        cols_encode = self.imputer.columns_to_encode
-        cols_scale  = self.imputer.columns_to_scale
+        scale_cols  = self.scaler.cols
 
-        # kept_cols   = self.imputer.kept_columns.index.to_list()
-
+        # print(chunk.columns.to_list())
+        # print("_______________")
+        # print(scale_cols)
         chunk = self.imputer.transform(chunk)
+        chunk = self.encoder.transform(chunk)
 
-        """
-            transform/change only selected indexes
-        """
-        # chunk[cols_encode] = self.encoder.transform(chunk[cols_encode])
 
-        """
-            the problem probably here (columns problem)
-        """
-
-        # chunk[cols_scale] = self.scaler.transform(chunk[cols_scale])
+        chunk[scale_cols] = self.scaler.transform(chunk[scale_cols])
         return chunk
 
