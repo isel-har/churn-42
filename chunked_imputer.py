@@ -1,6 +1,5 @@
 import pandas as pd
 
-
 class ChunkedImputer:
     def __init__(self, missing_threshold=0.5, chunksize=10000):
         self.missing_threshold = missing_threshold
