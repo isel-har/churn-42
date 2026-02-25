@@ -38,18 +38,23 @@
 
 
 
-from sklearn.base import BaseEstimator, TransformerMixin
+# from sklearn.base import BaseEstimator, TransformerMixin
 import pandas as pd
 import numpy as np
 
 
-class MissingAwareColumnSelector(BaseEstimator, TransformerMixin):
+class MissingAwareColumnSelector:
 
-    def __init__(self, missing_threshold=0.5):
+    def __init__(self, missing_threshold=0.5, y_cols=[]):
         self.missing_threshold = missing_threshold
+        self.y_cols = y_cols
+
 
     def fit(self, X, y=None):
         # X = pd.DataFrame(X)
+        # X.drop(columns=to)
+        num_cols = X.select_dtypes(include='number').columns.to_list()
+        cat_cols = X.select_dtypes(exclude='number').columns.to_list()
 
         self.missing_ratio_ = X.isnull().mean()
 
@@ -64,13 +69,21 @@ class MissingAwareColumnSelector(BaseEstimator, TransformerMixin):
 
         self.mid_missing_ = self.missing_ratio_[
             (self.missing_ratio_ > 0.25) &
-            (self.missing_ratio_ <= 0.5)
+            (self.missing_ratio_ <= 0.7)
         ].index.tolist()
 
         self.not_missing_ = self.missing_ratio_[
             self.missing_ratio_ == 0
         ].index.tolist()
 
+        self.kept_num = [c for c in self.columns_to_keep_ if c in num_cols and c not in self.y_cols]
+        self.kept_cat = [c for c in self.columns_to_keep_ if c in cat_cols and c not in self.y_cols]
+
+        self.num_low = [c for c in self.low_missing_ if c in self.kept_num and c not in self.y_cols]
+        self.num_mid = [c for c in self.mid_missing_ if c in self.kept_num and c not in self.y_cols]
+
+        self.cat_low = [c for c in self.low_missing_ if c in self.kept_cat and c not in self.y_cols]
+        self.cat_mid = [c for c in self.mid_missing_ if c in self.kept_cat and c not in self.y_cols]
 
         return self
 

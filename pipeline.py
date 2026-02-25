@@ -16,7 +16,7 @@ class Pipeline:
 
     def transform(self, df: pd.DataFrame):
     
-        transformed = df
+        transformed = df.copy()
         for name, transformer in self.steps:
             transformed = transformer.transform(transformed)
 

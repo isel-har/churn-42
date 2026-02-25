@@ -1,40 +1,51 @@
 import joblib
 import pandas as pd
 import numpy as np
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score#, roc_auc_score
+# from sklearn.model_selection import train_test_split
+# from sklearn.metrics import accuracy_score#, roc_auc_score
 
 from keras.models import Sequential
-from keras.layers import Dense
+from keras.layers import Dense, Dropout
 from keras.losses import BinaryCrossentropy
-
+from keras.optimizers import Adam
 import sys
-np.set_printoptions(threshold=np.inf)
-
+# np.set_printoptions(threshold=np.inf)
+# pd.set_option('display.max_columns', None)
 def main():
     
     if len(sys.argv) != 2:
         return
     try:
-        pipline = joblib.load("pipline.pkl")
+        preprocessor = joblib.load("preprocessor.pkl")
+        selector     = joblib.load("selector.pkl")
 
-        df = pd.read_csv(sys.argv[1])
-        y = df['TARGET']
-        X = df.drop(columns=['ID', 'TARGET'])
-        X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, random_state=42)
+        model = Sequential([
+            Dense(128, activation='relu', input_shape=(len(selector.columns_to_keep_) - 1,)),
+            Dropout(0.3),
+            Dense(64, activation='relu'),
+            Dropout(0.2),
+            Dense(32, activation='relu'),
+            Dense(1, activation='sigmoid')
+        ])
 
-        pipline.fit(X_train)
+        model.compile(
+            loss=BinaryCrossentropy(),
+            optimizer=Adam(learning_rate=0.001),
+            metrics=['Precision', 'Recall', 'AUC', 'accuracy']
+        )
 
-        X_train = pipline.transform(X_train)
-        X_test  = pipline.transform(X_test)
+        for chunk in pd.read_csv(sys.argv[1], chunksize=50_000):
+            y = chunk['TARGET']
+            chunk = chunk.drop(columns=['TARGET'])
+
+            transformed = preprocessor.transform(chunk)
+            model.fit(transformed, y, epochs=50, batch_size=32)
 
 
-
-
-        print(X.shape)
+        print("done!")
 
     except Exception as e:
-        print(str(e))
+        print("error:", str(e))
 
 if __name__ == "__main__":
     main()
