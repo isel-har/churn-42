@@ -7,7 +7,6 @@ from sklearn.preprocessing import OrdinalEncoder, StandardScaler#, FunctionTrans
 from sklearn.impute import SimpleImputer
 
 
-
 from column_transformer import ColumnTransformer
 from pipeline import Pipeline
 
@@ -20,12 +19,12 @@ def num_imputer_pipeline(selector, sample):
     num_imputers = []
 
     if selector.num_low:
-        low_imputer = SimpleImputer(strategy='median')
+        low_imputer = SimpleImputer(strategy='mean')
         low_imputer.fit(sample[selector.num_low])
         num_imputers.append((selector.num_low, low_imputer))
 
     if selector.num_mid:
-        mid_imputer = SimpleImputer(strategy='median')
+        mid_imputer = SimpleImputer(strategy='mean')
         mid_imputer.fit(sample[selector.num_mid])
         num_imputers.append((selector.num_mid, mid_imputer))
 
@@ -104,7 +103,6 @@ def build_final_preprocessor(num_imputer, scaler, cat_imputer, encoders, selecto
         ],
         # remainder='drop'
     )
-
     # -----------------------------
     # dummy_data = pd.DataFrame(
     #     {col: [0] for col in selector.kept_num} |

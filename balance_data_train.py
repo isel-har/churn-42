@@ -1,9 +1,10 @@
 
+from sklearn.model_selection import train_test_split
+from preprocessors import MissingAwareColumnSelector
 import pandas as pd
+import joblib
 import sys
 import gc
-from preprocessors import MissingAwareColumnSelector
-import joblib
 
 pd.set_option('display.max_rows', None)
 
@@ -13,11 +14,9 @@ def main():
         sys.exit(1)
     
     try:
-        
         chunksize   = 50_000
         majority_sample_fraction = 0.26
-        missing_threshold = 0.7
-
+        missing_threshold = 0.5
 
         sampled_chunks = []
 
@@ -28,7 +27,6 @@ def main():
             
             majority_sampled = majority.sample(frac=majority_sample_fraction, random_state=42)
 
-    
             combined_chunk = pd.concat([minority, majority_sampled])
 
             sampled_chunks.append(combined_chunk)
@@ -53,10 +51,12 @@ def main():
 
         selector = MissingAwareColumnSelector(y_cols=['TARGET'], missing_threshold=missing_threshold)
         selector.fit(df_balanced)
-    
-    
+
+        df_test, df_train = train_test_split(df_balanced, test_size=0.2, shuffle=True)
         joblib.dump(selector, 'selector.pkl')
-        df_balanced.to_csv("data/balanced_bank_data_train.csv", index=False)
+    
+        df_train.to_csv("data/blanced_bank_data_test.csv", index=False)
+        df_test.to_csv("data/balanced_bank_data_train.csv", index=False)
         
     except Exception as e:
         print("exception :", str(e))
