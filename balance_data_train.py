@@ -15,7 +15,7 @@ def main():
     
     try:
         chunksize   = 50_000
-        majority_sample_fraction = 0.26
+        majority_sample_fraction = 0.2
         missing_threshold = 0.5
 
         sampled_chunks = []
@@ -43,21 +43,24 @@ def main():
         cols_drop.append('ID')
         # cols_drop.append('ID')
         df_balanced = df_balanced.drop(columns=cols_drop)
-        df_balanced = df_balanced.sample(frac=1, random_state=42).reset_index(drop=True)
+        df_balanced = df_balanced.reset_index(drop=True)
 
         # IMPORTANT: Shuffle the dataframe 
         # # (Since we processed in chunks, the classes might be ordered)
 
-
         selector = MissingAwareColumnSelector(y_cols=['TARGET'], missing_threshold=missing_threshold)
         selector.fit(df_balanced)
 
-        df_test, df_train = train_test_split(df_balanced, test_size=0.2, shuffle=True)
-        joblib.dump(selector, 'selector.pkl')
+        df_test, df_train = train_test_split(df_balanced, test_size=0.2, stratify=df_balanced['TARGET'], random_state=42)
     
+        joblib.dump(selector, 'selector.pkl')
+
+        # df_balanced.to_csv("data/balanced_bank_data_train.csv", index=False)
         df_train.to_csv("data/blanced_bank_data_test.csv", index=False)
         df_test.to_csv("data/balanced_bank_data_train.csv", index=False)
-        
+
+
+        print("balanced_bank_data_*.csv saved.") 
     except Exception as e:
         print("exception :", str(e))
 

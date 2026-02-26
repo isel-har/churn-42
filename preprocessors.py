@@ -69,7 +69,7 @@ class MissingAwareColumnSelector:
 
         self.mid_missing_ = self.missing_ratio_[
             (self.missing_ratio_ > 0.25) &
-            (self.missing_ratio_ <= 0.7)
+            (self.missing_ratio_ < self.missing_threshold)
         ].index.tolist()
 
         self.not_missing_ = self.missing_ratio_[
@@ -77,11 +77,11 @@ class MissingAwareColumnSelector:
         ].index.tolist()
 
         self.kept_num = [c for c in self.columns_to_keep_ if c in num_cols and c not in self.y_cols]
-        self.kept_cat = [c for c in self.columns_to_keep_ if c in cat_cols and c not in self.y_cols]
 
         self.num_low = [c for c in self.low_missing_ if c in self.kept_num and c not in self.y_cols]
         self.num_mid = [c for c in self.mid_missing_ if c in self.kept_num and c not in self.y_cols]
 
+        self.kept_cat = [c for c in self.columns_to_keep_ if c in cat_cols and c not in self.y_cols]
         self.cat_low = [c for c in self.low_missing_ if c in self.kept_cat and c not in self.y_cols]
         self.cat_mid = [c for c in self.mid_missing_ if c in self.kept_cat and c not in self.y_cols]
 

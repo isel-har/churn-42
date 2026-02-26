@@ -5,13 +5,13 @@ import joblib
 
 from sklearn.preprocessing import OrdinalEncoder, StandardScaler#, FunctionTransformer
 from sklearn.impute import SimpleImputer
+# from sklearn.compose import ColumnTransformer
+# from sklearn.pipeline import Pipeline
 
 
 from column_transformer import ColumnTransformer
 from pipeline import Pipeline
 
-# from sklearn.compose import ColumnTransformer
-# from sklearn.pipeline import Pipeline
 
 
 def num_imputer_pipeline(selector, sample):
@@ -41,7 +41,7 @@ def cat_imputer_pipeline(selector, sample):
         cat_imputers.append((selector.cat_low, low_imputer))
 
     if selector.cat_mid:
-        mid_imputer = SimpleImputer(strategy='constant', fill_value='MISSING')
+        mid_imputer = SimpleImputer(strategy='constant', fill_value='MISSING')## add column to indicate missing
         mid_imputer.fit(sample[selector.cat_mid])
         cat_imputers.append((selector.cat_mid, mid_imputer))
 
@@ -130,7 +130,6 @@ def main():
         encoders = encoder_pipeline(sys.argv[1], selector, cat_imputer)
         scaler   = scaler_pipeline(sys.argv[1], selector, num_imputer)
         preprocessor = build_final_preprocessor(num_imputer, scaler, cat_imputer, encoders, selector)
-
 
         joblib.dump(preprocessor, "preprocessor.pkl")
         print("Preprocessor saved successfully.")
