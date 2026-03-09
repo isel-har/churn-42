@@ -1,115 +1,81 @@
 import sys
-import pandas as pd
-import numpy as np
 import joblib
+import pandas as pd
+import sklearn
 
-from sklearn.preprocessing import OrdinalEncoder, StandardScaler#, FunctionTransformer
-from sklearn.impute import SimpleImputer
-# from sklearn.compose import ColumnTransformer
-# from sklearn.pipeline import Pipeline
+from sklearn.impute import SimpleImputer#, KNNImputer, IterativeImputer
+from sklearn.preprocessing import StandardScaler, TargetEncoder,OrdinalEncoder#, RobustScaler
+from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import Pipeline
 
+from sklearn.feature_selection import VarianceThreshold
+from preprocessors import CorrelationFilter, MissingAwareColumnSelector, Transformer
 
-from column_transformer import ColumnTransformer
-from pipeline import Pipeline
+sklearn.set_config(transform_output="pandas")
 
+def num_imputers(selector):
 
-
-def num_imputer_pipeline(selector, sample):
-
-    num_imputers = []
-
+    imputers = []
     if selector.num_low:
-        low_imputer = SimpleImputer(strategy='mean')
-        low_imputer.fit(sample[selector.num_low])
-        num_imputers.append((selector.num_low, low_imputer))
+        imputers.append(("num_low", SimpleImputer(strategy='median'), selector.num_low))
 
-    if selector.num_mid:
-        mid_imputer = SimpleImputer(strategy='mean')
-        mid_imputer.fit(sample[selector.num_mid])
-        num_imputers.append((selector.num_mid, mid_imputer))
+    if selector.num_mid:#LGBMImputer()
+        imputers.append(("num_mid", SimpleImputer(strategy='median', add_indicator=True), selector.num_mid))
+        
+    if selector.num_high:
+        imputers.append(("num_high", SimpleImputer(strategy='median', add_indicator=True), selector.num_high))
 
-    return ColumnTransformer(fit_transformers=num_imputers)
+    return ColumnTransformer(transformers=imputers, remainder='passthrough')
 
 
-def cat_imputer_pipeline(selector, sample):
+def cat_imputers(selector):
 
-    cat_imputers = []
-
+    imputers = []
     if selector.cat_low:
-        low_imputer = SimpleImputer(strategy='constant', fill_value='MISSING')
-        low_imputer.fit(sample[selector.cat_low])
-        cat_imputers.append((selector.cat_low, low_imputer))
+        imputers.append(("cat_low", SimpleImputer(strategy='constant', fill_value='MISSING'), selector.cat_low))
 
     if selector.cat_mid:
-        mid_imputer = SimpleImputer(strategy='constant', fill_value='MISSING')## add column to indicate missing
-        mid_imputer.fit(sample[selector.cat_mid])
-        cat_imputers.append((selector.cat_mid, mid_imputer))
-
-    return ColumnTransformer(fit_transformers=cat_imputers)
-
-
-def encoder_pipeline(filepath, selector, cat_imputer, chunksize=50_000):
-
-    unique_categories = {col: set() for col in selector.kept_cat}
-
-    for chunk in pd.read_csv(filepath, usecols=selector.kept_cat, chunksize=chunksize):
-        imputed_chunk = cat_imputer.transform(chunk)
-        for col in selector.kept_cat:
-            unique_categories[col].update(imputed_chunk[col].astype(str).unique())
-
-    encoders = []
-    for col in selector.kept_cat:
-        categories_list = sorted(list(unique_categories[col]))
-        encoder = OrdinalEncoder(
-            categories=[categories_list],
-            handle_unknown="use_encoded_value",
-            unknown_value=-1
+        imputers.append(("cat_mid", SimpleImputer(strategy='constant', fill_value='MISSING'), selector.cat_mid))
+        
+    if selector.cat_high:
+        imputers.append(
+            (
+                "cat_high",
+                SimpleImputer(
+                    strategy='constant',
+                    fill_value='MISSING',
+                    add_indicator=True
+                ),
+                selector.cat_high
+            )
         )
-        # Fit on dummy data to initialize
-        encoder.fit(pd.DataFrame({col: categories_list})[[col]])
-        encoders.append(([col], encoder))
-
-    return ColumnTransformer(fit_transformers=encoders)
+    return ColumnTransformer(transformers=imputers, remainder='passthrough')
 
 
-def scaler_pipeline(filepath, selector, num_imputer, chunksize=50_000):
+def num_pipeline(selector):
 
-    scaler = StandardScaler()
-    for chunk in pd.read_csv(filepath, usecols=selector.kept_num, chunksize=chunksize):
-        transformed = num_imputer.transform(chunk)
-        scaler.partial_fit(transformed)
-    return scaler
-
-
-def build_final_preprocessor(num_imputer, scaler, cat_imputer, encoders, selector):
-
-    # Pipelines
-    num_pipeline = Pipeline([
-        ('imputer', num_imputer),
-        ('scaler', scaler)
+    return Pipeline(steps=[
+        ('impute_group', num_imputers(selector)),
+        ('remove_constants', VarianceThreshold(threshold=0.0001)), # almost constant value
+        ('remove_duplicated', CorrelationFilter(threshold=0.95)), # duplicated features
+        ('scaler', StandardScaler())
     ])
-    cat_pipeline = Pipeline([
-        ('imputer', cat_imputer),
-        ('encoder', encoders)
-    ])
-    # # Wrap in FunctionTransformer to skip fitting inner pipelines
-    # num_wrapped = FunctionTransformer(func=num_pipeline.transform, validate=False)
-    # cat_wrapped = FunctionTransformer(func=cat_pipeline.transform, validate=False)
 
-    preprocessor = ColumnTransformer(
-        fit_transformers=[
-            (selector.kept_num, num_pipeline),
-            (selector.kept_cat, cat_pipeline),
-        ],
-        # remainder='drop'
-    )
-    # -----------------------------
-    # dummy_data = pd.DataFrame(
-    #     {col: [0] for col in selector.kept_num} |
-    #     {col: ["MISSING"] for col in selector.kept_cat}
-    # )
-    # preprocessor.fit(dummy_data)  # does not re-fit inner pipelines
-    return preprocessor
+
+# def cat_encoders():
+
+#     return ColumnTransformer(transformers=[
+#         ('ordinal_cols', OrdinalEncoder(handle_unknown='use_encoded_value', unknown_value=-1), ['remainder__PACK']),
+#         ('target_cols', TargetEncoder(), ['cat_high__CLNT_JOB_POSITION'])]
+#         ,
+#         remainder='passthrough'
+#     )
+
+def cat_pipeline(selector):
+    return Pipeline([
+        ('impute_group', cat_imputers(selector)),
+        ('encoder', TargetEncoder(smooth=20))
+    ])
 
 
 def main():
@@ -118,25 +84,40 @@ def main():
         return
 
     try:
-        selector = joblib.load("selector.pkl")
-        sample = pd.read_csv(sys.argv[1], nrows=10_000)
-        # sample = sample.drop(columns=['TARGET'])
-        # Build imputers
-        num_imputer = num_imputer_pipeline(selector, sample)
-        cat_imputer = cat_imputer_pipeline(selector, sample)
-        del sample
+        balanced_df = pd.read_csv(sys.argv[1])
+        y = balanced_df['TARGET']
 
-        # Build encoders
-        encoders = encoder_pipeline(sys.argv[1], selector, cat_imputer)
-        scaler   = scaler_pipeline(sys.argv[1], selector, num_imputer)
-        preprocessor = build_final_preprocessor(num_imputer, scaler, cat_imputer, encoders, selector)
+        balanced_df = balanced_df.drop(columns=['TARGET'])
 
-        joblib.dump(preprocessor, "preprocessor.pkl")
-        print("Preprocessor saved successfully.")
+        selector    = MissingAwareColumnSelector(missing_threshold=0.5, y_cols=[])
+
+        balanced_df = selector.fit_transform(balanced_df)
+
+        # OrdinalEncoder(handle_unknown='use_encoded_value', unknown_value=-1)
+        #['CLNT_JOB_POSITION', 'PACK']
+        column_transformer = ColumnTransformer( 
+            transformers=[
+                ('num', num_pipeline(selector), selector.kept_num),
+                ('cat', cat_pipeline(selector), selector.kept_cat),
+            ],
+            verbose_feature_names_out=False
+        )
+        
+        column_transformer.fit(balanced_df, y=y)
+
+        transformer = Transformer(steps=[
+            selector,
+            column_transformer
+        ])
+        
+        joblib.dump(transformer, 'transformer.pkl')
+    
+        print('transformers.pkl saved successfully.')
 
     except Exception as e:
-        print("Error:", str(e))
 
+        import traceback
+        traceback.print_exc()
 
 if __name__ == "__main__":
     main()

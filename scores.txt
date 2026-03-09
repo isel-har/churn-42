@@ -1,0 +1,8 @@
+GOAL : 0.8183
+
+
+AUC: 0.8843043609885919 /* (targetencoding + simple median imputer + indicator + early stopping val data + 0.25 of majority fraction+ 0.6 missing threshold, variance 0.0001) */
+AUC: 0.8139118980823276 / * (target encoding, ...) */
+AUC: 0.8134331710489644
+AUC: 0.814203847292291
+AUC: 0.8142523838567259

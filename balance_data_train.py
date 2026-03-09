@@ -14,57 +14,35 @@ def main():
         sys.exit(1)
     
     try:
-        chunksize   = 50_000
-        majority_sample_fraction = 0.2
-        missing_threshold = 0.5
+        majority_sample_fraction = 0.25
 
-        sampled_chunks = []
+        df = pd.read_csv(sys.argv[1])
 
-        for chunk in pd.read_csv(sys.argv[1], chunksize=chunksize):
-    
-            minority = chunk[chunk['TARGET'] == 1]
-            majority = chunk[chunk['TARGET'] == 0]
-            
-            majority_sampled = majority.sample(frac=majority_sample_fraction, random_state=42)
+        df_train, df_test = train_test_split(
+            df,
+            test_size=0.2,
+            stratify=df['TARGET'],
+            random_state=42
+        )
 
-            combined_chunk = pd.concat([minority, majority_sampled])
+        minority = df_train[df_train['TARGET'] == 1]
+        majority = df_train[df_train['TARGET'] == 0]
+        majority_sampled = majority.sample(frac=majority_sample_fraction, random_state=42)
 
-            sampled_chunks.append(combined_chunk)
+        df_balanced = pd.concat([minority, majority_sampled]) \
+                .sample(frac=1, random_state=42) \
+                .reset_index(drop=True)
 
-            del chunk, minority, majority, combined_chunk
-            gc.collect()
+        print(df_balanced.shape)
+        print(df_balanced.describe())
 
+        df_balanced.to_csv("data/balanced_bank_data_train.csv", index=False)
+        df_test.to_csv("data/balanced_bank_data_test.csv", index=False)
 
-        df_balanced = pd.concat(sampled_chunks, axis=0)
+        print("train/test split saved.")
 
-        missing_ratio = df_balanced.isnull().mean()
-
-        cols_drop = missing_ratio[missing_ratio > missing_threshold].index.tolist()
-        cols_drop.append('ID')
-        # cols_drop.append('ID')
-        df_balanced = df_balanced.drop(columns=cols_drop)
-        df_balanced = df_balanced.reset_index(drop=True)
-
-        # IMPORTANT: Shuffle the dataframe 
-        # # (Since we processed in chunks, the classes might be ordered)
-
-        selector = MissingAwareColumnSelector(y_cols=['TARGET'], missing_threshold=missing_threshold)
-        selector.fit(df_balanced)
-
-        df_test, df_train = train_test_split(df_balanced, test_size=0.2, stratify=df_balanced['TARGET'], random_state=42)
-    
-        joblib.dump(selector, 'selector.pkl')
-
-        # df_balanced.to_csv("data/balanced_bank_data_train.csv", index=False)
-        df_train.to_csv("data/blanced_bank_data_test.csv", index=False)
-        df_test.to_csv("data/balanced_bank_data_train.csv", index=False)
-
-
-        print("balanced_bank_data_*.csv saved.") 
     except Exception as e:
         print("exception :", str(e))
 
-
 if __name__ == "__main__":
     main()
-

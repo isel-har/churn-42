@@ -3,7 +3,6 @@ import pandas as pd
 import numpy as np
 from sklearn.preprocessing import OrdinalEncoder, StandardScaler#, FunctionTransformer
 
-
 from sklearn.preprocessing import OrdinalEncoder, StandardScaler
 from sklearn.impute import SimpleImputer, KNNImputer
 from sklearn.compose import ColumnTransformer
@@ -75,7 +74,6 @@ def build_preprocessor(selector):
              ]),
              cat_mid
             ),
-
             # ===== CATEGORICAL NO MISSING =====
             ("cat_not_miss",
              OrdinalEncoder(
