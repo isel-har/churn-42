@@ -9,7 +9,7 @@ from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 
 from sklearn.feature_selection import VarianceThreshold
-from preprocessors import CorrelationFilter, MissingAwareColumnSelector, Transformer
+from preprocessors import CorrelationFilter, MissingAwareColumnSelector, Transformer, LGBMImputer
 
 sklearn.set_config(transform_output="pandas")
 
@@ -17,7 +17,7 @@ def num_imputers(selector):
 
     imputers = []
     if selector.num_low:
-        imputers.append(("num_low", SimpleImputer(strategy='median'), selector.num_low))
+        imputers.append(("num_low", LGBMImputer(), selector.num_low))
 
     if selector.num_mid:#LGBMImputer()
         imputers.append(("num_mid", SimpleImputer(strategy='median', add_indicator=True), selector.num_mid))

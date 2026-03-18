@@ -78,9 +78,10 @@ class MissingAwareColumnSelector(BaseEstimator, TransformerMixin):
         self.cat_mid = [c for c in self.mid_missing_ if c in self.kept_cat]
         self.cat_high = [c for c in self.high_missing_ if c in self.kept_cat]
 
-
         self.is_fit = True
+
         return self
+
 
     def transform(self, X):
         if self.is_fit == False:
@@ -92,7 +93,7 @@ class MissingAwareColumnSelector(BaseEstimator, TransformerMixin):
 
 class LGBMImputer(TransformerMixin, BaseEstimator):
 
-    def __init__(self, max_iter=10, n_estimators=300):
+    def __init__(self, max_iter=20, n_estimators=300):
         self.max_iter = max_iter
         self.n_estimators = n_estimators
         
@@ -126,6 +127,7 @@ class Transformer:
 
     def transform(self, X):
     
+        transformed = None
         for i, step in enumerate(self.steps):
 
             if i == 0:
