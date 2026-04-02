@@ -1,0 +1,100 @@
+GOAL : 0.85
+
+# frac 0.25, val_size 0.1, early-stopping_pat 20, targetencoding+simple median imputer + indicator+threshold 0.6 + variance .0001, corr 0.95, dropout 0.3 x 3 layers
+AUC: 0.8263881819690956
+# frac 0.25, val_size 0.1, early-stopping_pat 20, targetencoding+simple median imputer + indicator+threshold 0.6 + variance .0001, corr 0.98, dropout 0.3 x 3 layers
+AUC: 0.8259314185126196
+# frac 0.25, val_size 0.15, early-stopping_pat 20, targetencoding+simple median imputer + indicator+threshold 0.6 + variance .0001, corr 0.98, dropout 0.3 x 3 layers
+AUC: 0.8244656219490386
+# frac 0.25, val_size 0.1, early-stopping_pat 25, targetencoding+simple median imputer + indicator+threshold 0.6 + variance .0001, corr 0.98, dropout 0.3 x 3 layers
+AUC: 0.8273476003335253
+# frac 0.25, val_size 0.1, early-stopping_pat 25, targetencoding+simple median imputer + indicator+threshold 0.6 + variance .0001, corr 0.98, dropout 0.3 x 1 layers
+AUC: 0.8268267342798334
+# frac 0.25, val_size 0.1, early-stopping_pat 25, targetencoding+simple median imputer + indicator+threshold 0.6 + variance .0001, corr 0.98, dropout 0.2 x 3 layers
+AUC: 0.8266047342011821
+# frac 0.25, val_size 0.1, early-stopping_pat 25, targetencoding+simple median imputer + indicator+threshold 0.6 + variance .0001, corr 0.98, no dropout
+AUC: 0.8033127688715266
+# frac 0.25, val_size 0.1, early-stopping_pat 25, targetencoding+simple median imputer + indicator+threshold 0.6 + variance .0001, corr 0.98, dropout 0.3 h1, 0.2 h2, 0.1 h1
+AUC: 0.8247911854186962
+# frac 0.25, val_size 0.1, early-stopping_pat 25, targetencoding+simple median imputer + indicator+threshold 0.6 + variance .0001, corr 0.98, dropout 0.3 x 3 layers
+AUC: 0.8261509668616356
+# frac 0.25, val_size 0.1, early-stopping_pat 25, targetencoding+simple median imputer + indicator+threshold 0.5 + variance .0001, corr 0.98, dropout 0.3 x 3 layers
+AUC: 0.8278877769038884
+# frac 0.25, val_size 0.1, early-stopping_pat 25, targetencoding+simple median imputer + indicator+threshold 0.5 + dropout 0.3 x 3 layers
+AUC: 0.8256680039388209
+# frac 0.25, val_size 0.1, early-stopping_pat 25, targetencoding+simple median imputer + indicator+threshold 0.5 + variance .0001, corr 0.98, dropout 0.3 x 3 layers, remove smooth targetendcoding
+AUC: 0.7972172855389901
+# frac 0.25, val_size 0.15, early-stopping_pat 25, targetencoding+simple median imputer + indicator+threshold 0.5 + variance .0001, corr 0.98, dropout 0.3 x 3 layers, remove smooth targetendcoding
+AUC: 0.7979809258083435
+# frac 0.25, val_size 0.15, early-stopping_pat 25, targetencoding+simple median imputer + indicator+threshold 0.5 + variance .0001, corr 0.98, dropout 0.3 x 3 layers, smooth value : 1
+AUC: 0.8070929306594565
+# frac 0.25, val_size 0.15, early-stopping_pat 25, targetencoding+simple median imputer + indicator+threshold 0.5 + variance .0001, corr 0.98, dropout 0.3 x 3 layers, smooth value : 10
+AUC: 0.8219621794941333
+# frac 0.25, val_size 0.15, early-stopping_pat 25, targetencoding+simple median imputer + indicator+threshold 0.5 + variance .0001, corr 0.98, dropout 0.3 x 3 layers, smooth value : 100
+AUC: 0.8297824831030329
+# frac 0.25, val_size 0.15, early-stopping_pat 25, targetencoding+simple median imputer + indicator+threshold 0.5 + variance .0001, corr 0.98, dropout 0.3 x 3 layers, smooth value : 1000
+AUC: 0.8312906796219717
+# frac 0.25, val_size 0.15, early-stopping_pat 25, targetencoding + simple median imputer + indicator+threshold 0.5 + variance .0001, corr 0.98, dropout 0.3 x 3 layers, smooth value : 50
+AUC: 0.8303109798506367
+# frac 0.25, val_size 0.15, early-stopping_pat 25, targetencoding + simple median imputer + indicator+threshold 0.5 + variance .0001, corr 0.98, dropout 0.3 x 3 layers, pack smooth :5 , JOB_POS : 50
+AUC: 0.8310382190212073
+# frac 0.25, val_size 0.15, early-stopping_pat 25, targetencoding + simple median imputer + indicator+threshold 0.5 + variance .0001, corr 0.98, dropout 0.3 x 3 layers, pack smooth :1 , JOB_POS : 100
+AUC: 0.8311004672578131
+# frac 0.25, val_size 0.15, early-stopping_pat 25, targetencoding + simple median imputer + indicator+threshold 0.5 + variance .0001, corr 0.98, dropout 0.3 x 3 layers, pack smooth :10 , JOB_POS : 100
+AUC: 0.8302082747636846
+# frac 0.25, val_size 0.15, 500 epochs, targetencoding + simple median imputer + indicator+threshold 0.5 + variance .0001, corr 0.98, dropout 0.3 x 3 layers, pack smooth :10 , JOB_POS : 100
+AUC: 0.8295991173031567
+# frac 0.25, val_size 0.15, early-stopping_pat 25, targetencoding + simple median imputer + indicator+threshold 0.5 + variance .0001, corr 0.98, dropout 0.3 x 3 layers, pack smooth :10 , JOB_POS : 100 + robustscaler
+AUC: 0.7901866627205874
+# frac 0.25, val_size 0.15, early-stopping_pat 25, targetencoding + lgm,simple median imputers + indicator+threshold 0.5 + variance .0001, corr 0.98, dropout 0.3 x 3 layers, pack smooth :10 , JOB_POS : 100
+AUC: 0.8302550483609962
+# frac 0.25, val_size 0.15, early-stopping_pat 25, targetencoding + lgm, lgm,simple median imputers + indicator+threshold 0.5 + variance .0001, corr 0.98, dropout 0.3 x 3 layers, pack smooth :10 , JOB_POS : 100
+AUC: 0.8312174721141583
+# frac 0.25, val_size 0.15, early-stopping_pat 25, targetencoding + lgm, simple median imputers + indicator+threshold 0.5 + variance .0001, corr 0.98, dropout 0.3 x 3 layers, pack smooth :10 , JOB_POS : 100, quantiletransformer normal dist
+AUC: 0.8515329350140252
+AUC: 0.8489956733263512
+AUC: 0.8505330475472233
+# frac 0.25, val_size 0.1 (split before preprocessing/dataleakage), early-stopping_pat 25, targetencoding + lgm, simple median imputers + indicator+threshold 0.5 + variance .0001, corr 0.98, dropout 0.3 x 3 layers, pack smooth :10 , JOB_POS : 100, quantiletransformer normal dist
+AUC: 0.824236134227151
+# frac 0.25, val_size 0.15 (split before preprocessing/dataleakage), early-stopping_pat 25, targetencoding + lgm, simple median imputers + indicator+threshold 0.5 + variance .0001, corr 0.98, dropout 0.3 x 3 layers, pack smooth :10 , JOB_POS : 100, quantiletransformer normal dist, batch_size 128
+AUC: 0.8225383147658192
+# frac 0.25, no val data and early-stopping, targetencoding + lgm, simple median imputers + indicator+threshold 0.5 + variance .0001, corr 0.98, dropout 0.3 x 3 layers, pack smooth :10 , JOB_POS : 100, quantiletransformer normal dist, batch_size 128
+AUC: 0.823980873541865
+# frac 0.20, no val data and early-stopping, targetencoding + lgm, simple median imputers + indicator+threshold 0.5 + variance .0001, corr 0.98, dropout 0.3 x 3 layers, pack smooth :10 , JOB_POS : 100, quantiletransformer normal dist, batch_size 128
+AUC: 0.8238323154151898
+# frac 0.25,val data 15 early-stopping 40, targetencoding + lgm, simple median imputers + indicator+threshold 0.5 + variance .0001, dropout 0.3 1, 0.2, 0.1, smooth :10, quantiletransformer normal dist, batch_size 128
+AUC: 0.8158915148505281
+# frac 0.25,val data 15 early-stopping 25, targetencoding + lgm, simple median imputers + indicator+threshold 0.5 + variance .0001, dropout 0.3 x3, smooth :10, quantiletransformer normal dist, batch_size 128
+AUC: 0.8171649779247835
+# frac 0.25,val data 1 early-stopping 25, targetencoding + lgm, simple median imputers + indicator+threshold 0.5 + variance .0001, dropout 0.3 0.2 0.1, smooth :10, 100, quantiletransformer normal dist, batch_size 128
+AUC: 0.8225900558307174
+# frac 0.25,val data 1 early-stopping 25, targetencoding + lgm, simple median imputers + indicator+threshold 0.5 + dropout 0.3 0.2 0.1, smooth :10, 100, batch_size 128
+AUC: 0.8257576159153202
+# ratio 0.5,val data 1 early-stopping 25, targetencoding + lgm, simple median imputers + indicator+threshold 0.5 + dropout 0.3 0.2 0.1, smooth :10, 100, batch_size 128
+AUC: 0.8382168961908427
+# ratio 0.5,val data 1 early-stopping 25, targetencoding + lgm, simple median imputers + indicator+threshold 0.5 + quantile transformer + dropout 0.3 0.2 0.1, smooth :10, 100, batch_size 128
+AUC: 0.8278111394252997
+# ratio 0.5,val data 1 early-stopping 25, targetencoding 100 + lgm, simple median imputers + indicator+threshold 0.5 + quantile transformer + dropout 0.1 0.2 0.5, smooth :10, 100, batch_size 128
+AUC: 0.8347734623566729
+AUC: 0.835919033017667
+# ratio 0.25, class weight,val data 1 early-stopping 30, targetencoding 100 + lgm, simple median imputers + indicator+threshold 0.5 + dropout 0.1 0.2 0.5, smooth :20, 100, batch_size 64
+AUC: 0.8403540392398493
+# ratio 0.25, class weight,val data 1 early-stopping 30, targetencoding 100 + lgm, simple median imputers + indicator+threshold 0.5 + dropout 0.1 0.2 0.5, smooth :1, 20, batch_size 128
+AUC: 0.8349642818046376
+# ratio 0.25, class weight,val data 1 early-stopping 30, targetencoding 100 + lgm, simple median imputers + indicator+threshold 0.5 + dropout 0.3 0.3 0.2, smooth 1,100, batch_size 128
+AUC: 0.8407033685481073
+# ratio 0.25, class weight,val data 1 early-stopping 35, targetencoding 100 + lgm, simple median imputers + indicator+threshold 0.5 + dropout .5 .3 .2, smooth 1,100, batch_size 128
+AUC: 0.8392261341335802
+# ratio 0.25, class weight,val data 1 early-stopping 35, targetencoding 100 + lgm, simple median imputers + indicator+threshold 0.5 + dropout .4 .2 .1, smooth 1,100, batch_size 128
+AUC: 0.8392248013527409
+# ratio 0.25, class weight,val data 1 early-stopping 30, targetencoding 100 + lgm, simple median imputers + indicator+threshold 0.5 + dropout .4 .2 .1, smooth 1,100, batch_size 128
+AUC: 0.8396028475351038
+# ratio 0.25, class weight,val data 1 early-stopping 30, targetencoding 100 + lgm, simple median imputers + indicator+threshold 0.5 + dropout .5 .4 .2, smooth 1,100, batch_size 128
+AUC: 0.8372029810979558
+# ratio 0.25, class weight,val data 1 early-stopping 40, targetencoding 100 + lgm, simple median imputers + indicator+threshold 0.5 + dropout  .3 ., smooth 1,100, batch_size 128
+AUC: 0.8266399727496815
+AUC: 0.7908099663034862
+# ratio 0.25, class weight,val data 1 early-stopping 30, simple median imputers + indicator+threshold 0.6 + dropout 0.3 .3 .2, smooth 1,100, batch_size 128
+AUC: 0.8319178614676328
+# ratio 0.25, class weight,val data 1 early-stopping 30, simple median imputers + indicator+threshold 0.5 + (64 x 3) dropout 0.3 .3 .3, smooth 1,100, batch_size 128
+AUC: 0.834116493397198
