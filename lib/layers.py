@@ -1,11 +1,25 @@
 from .initializers import Initializers
+import numpy as np
 
 class Dropout:
-    def __init__(self, rate=0.3):
-        self.rate = rate
-
+    def __init__(self, rate=0.3, seed=42):
+        self.rate      = rate
+        self.keep_prob = 1.0 - rate
+        self.mask      = None
+        self.training  = True
+        self.rng = np.random.default_rng(seed)
     def __call__(self, inputs):
-        ...
+        if not self.training:
+            return inputs
+
+        # Always match inputs shape
+        self.mask = (self.rng.random(inputs.shape) < self.keep_prob).astype(np.float32)
+
+        return (inputs * self.mask) / self.keep_prob
+
+
+    def backward(self, grad_output):
+        return (grad_output * self.mask) / self.keep_prob
 
 
 class DenseLayer:

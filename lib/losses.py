@@ -11,6 +11,7 @@ class BinaryCrossEntropy:
             (1 - ybatch) * np.log(1 - probs)
         )
         return loss
+
     def backward(self, probs, ybatch):
         # The derivative of BCE with respect to probabilities (dLoss/dProbs)
         # Formula: -(y/p) + (1-y)/(1-p)

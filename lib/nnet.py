@@ -16,53 +16,89 @@ class NNet:
         self.earlystopping = earlystopping
         self.loss          = loss
         self.layers        = list()
-        self.training_mode = False
         self.earlystopping_bool = False
+        self.class_weight   = None
 
         if layers is not None:
             for layer in layers:
                 self.add(layer)
 
 
-    def add(self, layer: DenseLayer):
+    def add(self, layer):
 
-        if layer.output_size == 0:
-            raise Exception("output size not passed or equal to 0")
+        if isinstance(layer, DenseLayer):
+            if layer.output_size == 0:
+                raise Exception("output size not passed or equal to 0")
 
-        shape = [layer.input_size, layer.output_size]
+            shape = [layer.input_size, layer.output_size]
 
-        if layer.input_size == 0:
-            if len(self.layers) > 0:
-                layer.input_size = self.layers[-1].output_size
-                shape[0] = layer.input_size
-            else:
-                raise Exception("first layer must have input size")
+            if layer.input_size == 0:
+                dense_len = len([l for l in self.layers if isinstance(l, DenseLayer)])
+                if dense_len > 0:
 
-        layer.biases  = DenseLayer.initializers_dict['constant'](layer.bias_initializer, (1, shape[1]))
-        layer.weights = DenseLayer.initializers_dict[layer.weights_initializer](tuple(shape))
+                    for layer_ in reversed(self.layers):
+                        if hasattr(layer_, "output_size"):
+                            layer.input_size = layer_.output_size
+                            break
 
+                    shape[0] = layer.input_size
+                else:
+                    raise Exception("first layer must have input size")
+
+            layer.biases  = DenseLayer.initializers_dict['constant'](layer.bias_initializer, (1, shape[1]))
+            layer.weights = DenseLayer.initializers_dict[layer.weights_initializer](tuple(shape))
+
+            layer.weights_gradients = np.zeros(shape=(shape[0], shape[1]), dtype=np.float32)
+            layer.biases_gradients = np.zeros(shape=(1, shape[1]), dtype=np.float32)
+
+
+        elif not isinstance(layer, Dropout):
+            raise Exception("Layer instance must be a dense or dropout layer.")
+        
         self.layers.append(layer)
+
+
+
+    def set_weights(self, weights=None):
+    
+        i = 0
+        for layer in self.layers:
+            if isinstance(layer, DenseLayer):
+                layer.weights = weights[i]['w']
+                layer.biases  = weights[i]['b']
+                i += 1
+
+    def get_weights(self):
+
+        weights = []
+        for layer in self.layers:
+            if isinstance(layer, Dropout):
+                continue
+            weights.append({
+                'w': layer.weights.copy(),
+                'b': layer.biases.copy()
+            })
+        return weights
 
 
     def forward(self, inputs):
         
         for layer in self.layers:
-
-            if not self.training_mode and isinstance(layer, Dropout):
-                continue
             inputs = layer(inputs)
 
         return inputs
 
-
     def backward(self, probs, ybatch):
-        
         dout = self.loss.backward(probs, ybatch)
 
+        if self.class_weight is not None:
+            weights = np.ones_like(ybatch, dtype=float)
+            for class_val, weight in enumerate(self.class_weight):
+                weights[ybatch == class_val] = weight
+            
+            dout = dout * weights
+
         for layer in reversed(self.layers):
-    
-            if isinstance(layer, Dropout):
-                continue
             dout = layer.backward(dout)
         
         self.optimizer.update_step(self.layers)
@@ -113,9 +149,10 @@ class NNet:
         y=None,
         epochs=1,
         batch_size=16,
-        validation_data=None
+        validation_data=None,
+        class_weight=None
     ):
-
+        self.class_weight = class_weight
         if self.earlystopping is not None:
 
             self.X_val, self.y_val = self.check_validation_data(validation_data)
@@ -124,6 +161,9 @@ class NNet:
         self.training_mode = True
         rows = X_np.shape[0]
 
+        if callable(self.optimizer.init_hyper_params):
+            self.optimizer.init_hyper_params(self.layers)
+    
         for epoch in range(epochs):
             print(f"\nEpoch {epoch+1}/{epochs}")
 
@@ -131,7 +171,7 @@ class NNet:
                 
                 val_probs = self.forward(self.X_val)
                 val_loss  = self.loss(val_probs, self.y_val)
-                if self.earlystopping(val_loss):
+                if self.earlystopping(val_loss, self):
                     break
 
             pbar = tqdm(range(0, rows, batch_size),
@@ -150,9 +190,21 @@ class NNet:
                 probs = self.forward(xbatch)
                 self.backward(probs, ybatch)
 
-        self.training_mode = False
+
+        for layer in self.layers:
+            if hasattr(layer, "training"):
+                layer.training = False
+    
         return self
 
     def predict(self, X):
         return self.forward(X)
 
+    def predict_proba(self, X):
+        probs = self.forward(X)
+
+        # Ensure shape is (n_samples, 2)
+        if probs.ndim == 1:
+            probs = probs.reshape(-1, 1)
+
+        return np.hstack([1 - probs, probs])
