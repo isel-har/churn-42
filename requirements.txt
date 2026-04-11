@@ -5,3 +5,4 @@ pandas
 joblib
 tqdm
 jupyter
+keras-tuner

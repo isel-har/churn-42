@@ -5,13 +5,16 @@ from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
 
 from sklearn.feature_selection import VarianceThreshold
-from lib.column_transformer import CorrelationFilter
+from lib.column_transformer import CorrelationFilter, DynamicRatioTransformer
 
 
 import numpy as np
 
 sklearn.set_config(transform_output="pandas")
 
+# pd.set_option('display.max_rows', None)
+# 0.8395581238803222 0.2 val 0.2 test without understampling
+# 0.8395581238803222
 
 def num_imputers(selector):
     
@@ -20,7 +23,7 @@ def num_imputers(selector):
     if selector.num_low:
         imputers.append(("num_low", SimpleImputer(strategy='median'), selector.num_low))
 
-    if selector.num_mid:
+    if selector.num_mid:#SimpleImputer(strategy='median', add_indicator=True)
         imputers.append(("num_mid", SimpleImputer(strategy='median', add_indicator=True), selector.num_mid))
         
     if selector.num_high:
@@ -61,6 +64,7 @@ def num_pipeline(selector):
         ('remove_constants', VarianceThreshold(threshold=0.0001)), # almost constant value
         ('remove_duplicated', CorrelationFilter(threshold=0.95)),
         ('log_skewed', FunctionTransformer(np.log1p)),  # for skewed subset
+        # ('scaler', RobustScaler())
         ('scaler', StandardScaler())
     ])
 
@@ -77,3 +81,21 @@ def cat_pipeline(selector):
         ('impute_group', cat_imputers(selector)),
         ('encoder', cat_encoders())
     ])
+
+
+
+def build_pipeline(selector):
+
+    return ColumnTransformer( 
+        transformers=[
+            ('num', num_pipeline(selector), selector.kept_num),
+            ('cat', cat_pipeline(selector), selector.kept_cat),
+        ],
+        verbose_feature_names_out=False
+    )
+    # return Pipeline([
+    #     # ① create ratio features FIRST, on raw DataFrame
+    #     # ('ratio_features', DynamicRatioTransformer()),
+    #     ('features', column_transformer),
+    #     # ② split and process num/cat in parallel as before
+    # ])
