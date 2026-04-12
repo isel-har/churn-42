@@ -38,6 +38,11 @@ class TNetWrapper(BaseEstimator, ClassifierMixin):
         preds = self.model_.predict_classes(X)
         return preds.numpy().flatten()
 
+
+    # def predict_classes(self, X):
+    #     return self.model_.predict_classes(X)
+
+
     def score(self, X, y):
         preds = self.predict(X)
         return np.mean(preds == y)

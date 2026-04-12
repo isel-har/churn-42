@@ -1,17 +1,19 @@
 from sklearn.base import BaseEstimator, ClassifierMixin
-import numpy as np
+from .class_weight import compute_class_weight
+from sklearn.metrics import roc_auc_score
+from .earlystopping import EarlyStopping
 from .layers import DenseLayer, Dropout
 from .losses import BinaryCrossEntropy
-from .optimizers import Adam
 from .activations import Relu, Sigmoid
-from .earlystopping import EarlyStopping
-from .class_weight import compute_class_weight
+from .optimizers import Adam
 from .nnet import NNet
+import numpy as np
 
-from sklearn.metrics import roc_auc_score
+
 
 class NNetWrapper(BaseEstimator, ClassifierMixin):
-    def __init__(self, learning_rate=0.001, batch_size=256, epochs=200):
+    _estimator_type = "classifier"
+    def __init__(self, learning_rate=0.001, batch_size=256, epochs=300):
         self.learning_rate = learning_rate
         self.batch_size = batch_size
         self.epochs = epochs
@@ -25,9 +27,9 @@ class NNetWrapper(BaseEstimator, ClassifierMixin):
                 DenseLayer(output_size=32, activation=Relu()),
                 Dropout(0.2),
                 DenseLayer(output_size=16, activation=Relu()),
-                Dropout(0.1),
-                DenseLayer(output_size=8, activation=Relu()),
-                DenseLayer(output_size=1, activation=Sigmoid())
+                # Dropout(0.1),
+                # DenseLayer(output_size=8, activation=Relu()),
+                DenseLayer(output_size=1, activation=Sigmoid(),  weights_initializer='xavier')
             ],
             earlystopping=EarlyStopping(patience=40, restore_best_weights=True),
             optimizer=Adam(learning_rate=self.learning_rate),

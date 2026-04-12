@@ -208,3 +208,5 @@ class NNet:
             probs = probs.reshape(-1, 1)
 
         return np.hstack([1 - probs, probs])
+
+    
