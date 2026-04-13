@@ -13,25 +13,39 @@ import numpy as np
 
 class NNetWrapper(BaseEstimator, ClassifierMixin):
     _estimator_type = "classifier"
-    def __init__(self, learning_rate=0.001, batch_size=256, epochs=300):
+    def __init__(
+        self,
+        learning_rate=0.001,
+        batch_size=256,
+        epochs=300,
+        early_stopping_patience=10,
+        restore_best_weights=True,
+        drop_rate=0.3,
+        use_class_weight=True
+    ):
         self.learning_rate = learning_rate
         self.batch_size = batch_size
         self.epochs = epochs
-
+        self.early_stopping_patience = early_stopping_patience
+        self.restore_best_weights = restore_best_weights
+        self.drop_rate = drop_rate
+        self.use_class_weight = use_class_weight
+    
     def build_model(self, input_dim):
 
         return NNet(
             layers=[
                 DenseLayer(input_size=input_dim, output_size=64, activation=Relu()),
-                Dropout(0.3),
+                Dropout(self.drop_rate),
                 DenseLayer(output_size=32, activation=Relu()),
                 Dropout(0.2),
                 DenseLayer(output_size=16, activation=Relu()),
-                # Dropout(0.1),
-                # DenseLayer(output_size=8, activation=Relu()),
                 DenseLayer(output_size=1, activation=Sigmoid(),  weights_initializer='xavier')
             ],
-            earlystopping=EarlyStopping(patience=40, restore_best_weights=True),
+            earlystopping=EarlyStopping(
+                patience=self.early_stopping_patience,
+                restore_best_weights=self.restore_best_weights
+            ),
             optimizer=Adam(learning_rate=self.learning_rate),
             loss=BinaryCrossEntropy()
         )
@@ -39,10 +53,11 @@ class NNetWrapper(BaseEstimator, ClassifierMixin):
     def fit(self, X, y, validation_data=None):
         self.model_ = self.build_model(X.shape[1])
 
-        class_weight = compute_class_weight(np.unique(y), y)
+        class_weight = compute_class_weight(np.unique(y), y) if self.use_class_weight else None
 
         self.model_.fit(
-            X, y,
+            X,
+            y,
             epochs=self.epochs,
             batch_size=self.batch_size,
             class_weight=class_weight,

@@ -12,6 +12,9 @@ import numpy as np
 
 sklearn.set_config(transform_output="pandas")
 
+# pd.set_option('display.max_rows', None)
+# 0.8395581238803222 0.2 val 0.2 test without understampling
+# 0.8395581238803222
 
 def num_imputers(selector):
     
@@ -20,7 +23,7 @@ def num_imputers(selector):
     if selector.num_low:
         imputers.append(("num_low", SimpleImputer(strategy='median'), selector.num_low))
 
-    if selector.num_mid:
+    if selector.num_mid:#SimpleImputer(strategy='median', add_indicator=True)
         imputers.append(("num_mid", SimpleImputer(strategy='median', add_indicator=True), selector.num_mid))
         
     if selector.num_high:
@@ -58,7 +61,7 @@ def num_pipeline(selector):
 
     return Pipeline(steps=[
         ('impute_group', num_imputers(selector)),
-        ('remove_constants', VarianceThreshold(threshold=0.0001)), # almost constant value
+        ('remove_constants', VarianceThreshold(threshold=0.0001)),
         ('remove_duplicated', CorrelationFilter(threshold=0.95)),
         ('log_skewed', FunctionTransformer(np.log1p)),  # for skewed subset
         ('scaler', StandardScaler())
