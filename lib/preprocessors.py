@@ -14,7 +14,6 @@ sklearn.set_config(transform_output="pandas")
 
 # pd.set_option('display.max_rows', None)
 # 0.8395581238803222 0.2 val 0.2 test without understampling
-# 0.8395581238803222
 
 def num_imputers(selector):
     
