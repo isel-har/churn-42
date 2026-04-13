@@ -5,6 +5,7 @@ import tensorflow as tf
 
 
 class TNetWrapper(BaseEstimator, ClassifierMixin):
+    _estimator_type = "classifier"
     def __init__(self, hidden_units=10, epochs=10, learning_rate=0.001, batch_size=32):
         self.hidden_units = hidden_units
         self.epochs = epochs
@@ -33,13 +34,13 @@ class TNetWrapper(BaseEstimator, ClassifierMixin):
         )
         return self
 
-    def predict(self, X):
+    def predict_proba(self, X):
         X = tf.convert_to_tensor(X, dtype=tf.float32)
         preds = self.model_.predict(X)
         return preds.numpy().flatten()
 
 
-    # def predict_classes(self, X):
+    # def predict_proba(self, X):
     #     return self.model_.predict_classes(X)
 
 

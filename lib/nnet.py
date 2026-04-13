@@ -200,13 +200,12 @@ class NNet:
     def predict(self, X):
         return self.forward(X)
 
-    def predict_proba(self, X):
-        probs = self.forward(X)
+    # def predict_proba(self, X):
+    #     probs = self.forward(X)
 
-        # Ensure shape is (n_samples, 2)
-        if probs.ndim == 1:
-            probs = probs.reshape(-1, 1)
+    #     if probs.ndim == 1:
+    #         probs = probs.reshape(-1, 1)
 
-        return np.hstack([1 - probs, probs])
+    #     return np.hstack([1 - probs, probs])
 
     

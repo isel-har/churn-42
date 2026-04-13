@@ -3,7 +3,7 @@ import tensorflow as tf
 class Dense(tf.Module):
     def __init__(self, in_features, out_features, activation=None, name=None):
         super().__init__(name=name)
-        # Xavier Initialization
+
         limit = tf.sqrt(6 / (in_features + out_features))
         w_init = tf.random.uniform([in_features, out_features], minval=-limit, maxval=limit)
         
@@ -16,7 +16,6 @@ class Dense(tf.Module):
         if self.activation:
             y = self.activation(y)
         return y
-
 
 
 class TNet(tf.Module):
@@ -42,17 +41,14 @@ class TNet(tf.Module):
 
 
     def fit(self, x, y, epochs=10, learning_rate=0.01, batch_size=32):
-    # 1. Prepare the target shape
         y = tf.reshape(y, (-1, 1))
-        
-        # 2. Use tf.data for efficient batching and shuffling
+
         dataset = tf.data.Dataset.from_tensor_slices((x, y))
         dataset = dataset.shuffle(buffer_size=len(x)).batch(batch_size)
 
         for epoch in range(epochs):
             epoch_loss_avg = tf.keras.metrics.Mean()
 
-            # 3. Iterate over the batches
             for x_batch, y_batch in dataset:
                 with tf.GradientTape() as tape:
                     y_pred = self(x_batch)
@@ -68,10 +64,9 @@ class TNet(tf.Module):
             print(f"Epoch {epoch}, Average Loss: {epoch_loss_avg.result():.4f}")
 
 
-    def predict(self, x):
-        return self(x)
+    def predict(self, X):
+        return self(X)
 
-    def predict_classes(self, x, threshold=0.5):
-        probs = self.predict(x)
-        return tf.cast(probs > threshold, tf.float32)
+    # def predict_proba(self, X):
+    #     return self(X)
     

@@ -1,10 +1,12 @@
 from sklearn.base import BaseEstimator, ClassifierMixin
+from sklearn.metrics import roc_auc_score
 from .tf_modules import Dense, TNet
 import numpy as np
 import tensorflow as tf
 
 
 class TNetWrapper(BaseEstimator, ClassifierMixin):
+    _estimator_type = "classifier"
     def __init__(self, hidden_units=10, epochs=10, learning_rate=0.001, batch_size=32):
         self.hidden_units = hidden_units
         self.epochs = epochs
@@ -34,15 +36,11 @@ class TNetWrapper(BaseEstimator, ClassifierMixin):
         return self
 
     def predict(self, X):
-        X = tf.convert_to_tensor(X, dtype=tf.float32)
-        preds = self.model_.predict(X)
-        return preds.numpy().flatten()
+        probs = self.model_(X)
+        return (probs > 0.5).astype(int)
 
-
-    # def predict_classes(self, X):
-    #     return self.model_.predict_classes(X)
-
+    def predict_proba(self, X):
+        return self.model_(X)
 
     def score(self, X, y):
-        preds = self.predict(X)
-        return np.mean(preds == y)
+        return roc_auc_score(y, self.predict_proba(X))

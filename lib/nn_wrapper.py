@@ -73,5 +73,4 @@ class NNetWrapper(BaseEstimator, ClassifierMixin):
         return self.model_.predict(X)
 
     def score(self, X, y):
-        from sklearn.metrics import roc_auc_score
         return roc_auc_score(y, self.model_.predict(X))
