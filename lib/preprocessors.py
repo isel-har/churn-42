@@ -70,7 +70,7 @@ def num_pipeline(selector):
 def cat_encoders():
     return ColumnTransformer(transformers=[
         ('pack_enc', TargetEncoder(smooth=1), ['PACK']),
-        ('job_enc', TargetEncoder(smooth=100), ['CLNT_JOB_POSITION']),
+        # ('job_enc', TargetEncoder(smooth=100), ['CLNT_JOB_POSITION']),
     ], remainder='passthrough', verbose_feature_names_out=False)
 
 
